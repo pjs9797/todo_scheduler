@@ -105,6 +105,8 @@ class StartTimeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasNoTasks = totalMinutes == 0;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -120,8 +122,8 @@ class StartTimeCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              Icons.play_arrow_rounded,
+            child: Icon(
+              hasNoTasks ? Icons.hourglass_empty : Icons.play_arrow_rounded,
               color: Colors.white,
               size: 20,
             ),
@@ -140,7 +142,7 @@ class StartTimeCard extends StatelessWidget {
                         color: AppColors.slate400,
                       ),
                     ),
-                    if (result?.isPreviousDay == true) ...[
+                    if (result?.isPreviousDay == true && !hasNoTasks) ...[
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -162,38 +164,48 @@ class StartTimeCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 2),
+                if (hasNoTasks)
+                  Text(
+                    AppStrings.selectEndTimeFirst,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.slate400,
+                    ),
+                  )
+                else
+                  Text(
+                    result?.timeString ?? '--:--',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (!hasNoTasks)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Text(
+                  AppStrings.totalDuration,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.slate400,
+                  ),
+                ),
+                const SizedBox(height: 2),
                 Text(
-                  result?.timeString ?? '--:--',
+                  '$totalMinutes분',
                   style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
                 ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                AppStrings.totalDuration,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.slate400,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '$totalMinutes분',
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
