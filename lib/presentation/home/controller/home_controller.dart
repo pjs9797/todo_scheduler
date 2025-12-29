@@ -10,6 +10,7 @@ class HomeController extends GetxController {
   final AddTaskUseCase _addTaskUseCase;
   final UpdateTaskUseCase _updateTaskUseCase;
   final DeleteTaskUseCase _deleteTaskUseCase;
+  final ReorderTasksUseCase _reorderTasksUseCase;
   final CalculateStartTimeUseCase _calculateStartTimeUseCase;
 
   HomeController({
@@ -18,12 +19,14 @@ class HomeController extends GetxController {
     required AddTaskUseCase addTaskUseCase,
     required UpdateTaskUseCase updateTaskUseCase,
     required DeleteTaskUseCase deleteTaskUseCase,
+    required ReorderTasksUseCase reorderTasksUseCase,
     required CalculateStartTimeUseCase calculateStartTimeUseCase,
   })  : _getAllCategoriesUseCase = getAllCategoriesUseCase,
         _getTasksByFilterUseCase = getTasksByFilterUseCase,
         _addTaskUseCase = addTaskUseCase,
         _updateTaskUseCase = updateTaskUseCase,
         _deleteTaskUseCase = deleteTaskUseCase,
+        _reorderTasksUseCase = reorderTasksUseCase,
         _calculateStartTimeUseCase = calculateStartTimeUseCase;
 
   // ==================== State ====================
@@ -215,6 +218,33 @@ class HomeController extends GetxController {
     await _deleteTaskUseCase(taskId);
     await _loadTasks();
     _calculateStartTime();
+  }
+
+  /// 할 일 순서 변경
+  Future<void> reorderTasks(String? categoryId, int oldIndex, int newIndex) async {
+    // 해당 그룹 찾기
+    final groupIndex = taskGroups.indexWhere((g) => g.categoryId == categoryId);
+    if (groupIndex == -1) return;
+
+    final group = taskGroups[groupIndex];
+    final tasks = List<TaskEntity>.from(group.tasks);
+
+    // 순서 조정
+    if (newIndex > oldIndex) newIndex--;
+    final task = tasks.removeAt(oldIndex);
+    tasks.insert(newIndex, task);
+
+    // UI 즉시 업데이트
+    taskGroups[groupIndex] = TaskGroup(
+      key: group.key,
+      title: group.title,
+      colorHex: group.colorHex,
+      categoryId: group.categoryId,
+      tasks: tasks,
+    );
+
+    // DB 저장
+    await _reorderTasksUseCase(tasks);
   }
 
   /// 데이터 새로고침

@@ -33,16 +33,37 @@ class CategoryManagementScreen extends GetView<CategoryController> {
           return _buildEmptyState();
         }
 
-        return ListView.separated(
+        return ReorderableListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: controller.categories.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          buildDefaultDragHandles: false,
+          onReorder: controller.reorderCategories,
+          proxyDecorator: (child, index, animation) {
+            return AnimatedBuilder(
+              animation: animation,
+              builder: (context, child) {
+                final elevation = Tween<double>(begin: 0, end: 4).animate(animation).value;
+                return Material(
+                  elevation: elevation,
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  child: child,
+                );
+              },
+              child: child,
+            );
+          },
           itemBuilder: (context, index) {
             final category = controller.categories[index];
-            return _CategoryListItem(
-              category: category,
-              onEdit: () => _onEditCategory(category),
-              onDelete: () => _onDeleteCategory(category),
+            return Padding(
+              key: ValueKey(category.id),
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _CategoryListItem(
+                category: category,
+                index: index,
+                onEdit: () => _onEditCategory(category),
+                onDelete: () => _onDeleteCategory(category),
+              ),
             );
           },
         );
@@ -157,11 +178,13 @@ class CategoryManagementScreen extends GetView<CategoryController> {
 /// 카테고리 리스트 아이템
 class _CategoryListItem extends StatelessWidget {
   final CategoryEntity category;
+  final int index;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _CategoryListItem({
     required this.category,
+    required this.index,
     required this.onEdit,
     required this.onDelete,
   });
@@ -170,79 +193,86 @@ class _CategoryListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = ColorUtils.hexToColor(category.colorHex);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.slate200),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(8),
-          ),
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.slate200),
         ),
-        title: Text(
-          category.name,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: AppColors.slate800,
-          ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 드래그 핸들 (10단계에서 활성화)
-            Icon(
-              Icons.drag_indicator,
-              color: AppColors.slate300,
-              size: 20,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          leading: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(8),
             ),
-            const SizedBox(width: 8),
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: AppColors.slate500),
-              onSelected: (value) {
-                if (value == 'edit') {
-                  onEdit();
-                } else if (value == 'delete') {
-                  onDelete();
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit_outlined,
-                          size: 18, color: AppColors.slate600),
-                      const SizedBox(width: 8),
-                      const Text(AppStrings.edit),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete_outline, size: 18, color: AppColors.error),
-                      const SizedBox(width: 8),
-                      Text(
-                        AppStrings.delete,
-                        style: TextStyle(color: AppColors.error),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          ),
+          title: Text(
+            category.name,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: AppColors.slate800,
             ),
-          ],
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 드래그 핸들
+              ReorderableDragStartListener(
+                index: index,
+                child: Icon(
+                  Icons.drag_indicator,
+                  color: AppColors.slate300,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, color: AppColors.slate500),
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    onEdit();
+                  } else if (value == 'delete') {
+                    onDelete();
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit_outlined,
+                            size: 18, color: AppColors.slate600),
+                        const SizedBox(width: 8),
+                        const Text(AppStrings.edit),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline, size: 18, color: AppColors.error),
+                        const SizedBox(width: 8),
+                        Text(
+                          AppStrings.delete,
+                          style: TextStyle(color: AppColors.error),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          onTap: onEdit,
         ),
-        onTap: onEdit,
       ),
     );
   }

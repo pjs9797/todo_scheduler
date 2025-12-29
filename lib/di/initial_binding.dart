@@ -52,6 +52,7 @@ class InitialBinding extends Bindings {
           addTaskUseCase: Get.find<AddTaskUseCase>(),
           updateTaskUseCase: Get.find<UpdateTaskUseCase>(),
           deleteTaskUseCase: Get.find<DeleteTaskUseCase>(),
+          reorderTasksUseCase: Get.find<ReorderTasksUseCase>(),
           calculateStartTimeUseCase: Get.find<CalculateStartTimeUseCase>(),
         ));
 
@@ -60,6 +61,7 @@ class InitialBinding extends Bindings {
           addCategoryUseCase: Get.find<AddCategoryUseCase>(),
           updateCategoryUseCase: Get.find<UpdateCategoryUseCase>(),
           deleteCategoryUseCase: Get.find<DeleteCategoryUseCase>(),
+          reorderCategoriesUseCase: Get.find<ReorderCategoriesUseCase>(),
         ));
   }
 }

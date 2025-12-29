@@ -8,16 +8,19 @@ class CategoryController extends GetxController {
   final AddCategoryUseCase _addCategoryUseCase;
   final UpdateCategoryUseCase _updateCategoryUseCase;
   final DeleteCategoryUseCase _deleteCategoryUseCase;
+  final ReorderCategoriesUseCase _reorderCategoriesUseCase;
 
   CategoryController({
     required GetAllCategoriesUseCase getAllCategoriesUseCase,
     required AddCategoryUseCase addCategoryUseCase,
     required UpdateCategoryUseCase updateCategoryUseCase,
     required DeleteCategoryUseCase deleteCategoryUseCase,
+    required ReorderCategoriesUseCase reorderCategoriesUseCase,
   })  : _getAllCategoriesUseCase = getAllCategoriesUseCase,
         _addCategoryUseCase = addCategoryUseCase,
         _updateCategoryUseCase = updateCategoryUseCase,
-        _deleteCategoryUseCase = deleteCategoryUseCase;
+        _deleteCategoryUseCase = deleteCategoryUseCase,
+        _reorderCategoriesUseCase = reorderCategoriesUseCase;
 
   // ==================== State ====================
 
@@ -79,5 +82,20 @@ class CategoryController extends GetxController {
   bool isDuplicateName(String name, {String? excludeId}) {
     return categories.any((c) =>
         c.name.toLowerCase() == name.toLowerCase() && c.id != excludeId);
+  }
+
+  /// 카테고리 순서 변경
+  Future<void> reorderCategories(int oldIndex, int newIndex) async {
+    // 순서 조정
+    if (newIndex > oldIndex) newIndex--;
+    final items = List<CategoryEntity>.from(categories);
+    final item = items.removeAt(oldIndex);
+    items.insert(newIndex, item);
+
+    // UI 즉시 업데이트
+    categories.value = items;
+
+    // DB 저장
+    await _reorderCategoriesUseCase(items);
   }
 }

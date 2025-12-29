@@ -185,6 +185,9 @@ class HomeScreen extends GetView<HomeController> {
                 onAddTask: () => _onAddTaskToCategory(group.categoryId),
                 onEditTask: _onEditTask,
                 onDeleteTask: _onDeleteTask,
+                onReorder: (oldIndex, newIndex) {
+                  controller.reorderTasks(group.categoryId, oldIndex, newIndex);
+                },
               ),
             );
           },
