@@ -6,7 +6,25 @@
       "Bash(flutter create:*)",
       "Bash(flutter pub get:*)",
       "Bash(flutter analyze:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/core/theme )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/core/utils )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/data/datasources/local )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/data/models )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/data/repositories )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/domain/entities )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/domain/repositories )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/domain/usecases/category )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/domain/usecases/task )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/presentation/home/controller )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/presentation/home/widgets )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/presentation/category/controller )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/presentation/category/widgets )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/presentation/common/widgets )",
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/di)"
     ]
   }
 }
