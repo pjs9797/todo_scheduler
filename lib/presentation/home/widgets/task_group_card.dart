@@ -101,41 +101,6 @@ class TaskGroupCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // 완료 시간
-            Expanded(
-              child: GestureDetector(
-                onTap: () => _pickEndTime(context),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.flag_outlined, size: 14, color: AppColors.slate400),
-                        const SizedBox(width: 4),
-                        Text(
-                          AppStrings.endTime,
-                          style: TextStyle(fontSize: 11, color: AppColors.slate400),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      group.endTimeString,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // 화살표
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Icon(Icons.arrow_back, size: 16, color: AppColors.slate500),
-            ),
             // 시작 시간
             Expanded(
               child: Column(
@@ -177,6 +142,36 @@ class TaskGroupCard extends StatelessWidget {
                 ],
               ),
             ),
+            // 완료 시간
+            Expanded(
+              child: GestureDetector(
+                onTap: () => _pickEndTime(context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.flag_outlined, size: 14, color: AppColors.slate400),
+                        const SizedBox(width: 4),
+                        Text(
+                          AppStrings.endTime,
+                          style: TextStyle(fontSize: 11, color: AppColors.slate400),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      group.endTimeString,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             // 소요 시간
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -188,8 +183,8 @@ class TaskGroupCard extends StatelessWidget {
                 children: [
                   Text(
                     '${group.totalMinutes}',
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: TextStyle(
+                      fontSize: group.totalMinutes >= 1000 ? 12 : 16,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),

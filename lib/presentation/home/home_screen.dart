@@ -27,8 +27,6 @@ class HomeScreen extends GetView<HomeController> {
               slivers: [
                 // 헤더
                 SliverToBoxAdapter(child: _buildHeader()),
-                // 총 소요 시간
-                SliverToBoxAdapter(child: _buildTotalDuration()),
                 // 필터 칩
                 SliverToBoxAdapter(child: _buildFilterChips()),
                 // 할 일 목록
@@ -81,43 +79,6 @@ class HomeScreen extends GetView<HomeController> {
             onPressed: _onOpenCategoryManagement,
             icon: const Icon(Icons.settings_outlined),
             tooltip: AppStrings.categoryManage,
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 총 소요 시간 배지
-  Widget _buildTotalDuration() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.slate800,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.check_circle_outline,
-                  size: 16,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 6),
-                Obx(() => Text(
-                      '${AppStrings.totalDuration}: ${controller.totalMinutes}분',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    )),
-              ],
-            ),
           ),
         ],
       ),
