@@ -29,10 +29,7 @@ class CategoryFormBottomSheet extends StatefulWidget {
         onSave: onSave,
       ),
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
     );
   }
 
@@ -64,99 +61,180 @@ class _CategoryFormBottomSheetState extends State<CategoryFormBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final bottomPadding = bottomInset > 0 ? 20.0 + bottomInset : 24.0;
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPadding),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 핸들바
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.slate300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              // 제목
-              Text(
-                isEditing ? AppStrings.categoryEdit : AppStrings.categoryAdd,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.slate800,
-                ),
-              ),
-              const SizedBox(height: 20),
-              // 카테고리 이름
-              _buildLabel(AppStrings.categoryName),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  hintText: '예: 공부',
-                  hintStyle: TextStyle(color: AppColors.slate400),
-                  filled: true,
-                  fillColor: AppColors.slate50,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                ),
-                textInputAction: TextInputAction.done,
-              ),
-              const SizedBox(height: 16),
-              // 색상 선택
-              _buildLabel(AppStrings.categoryColor),
-              const SizedBox(height: 12),
-              _buildColorSelector(),
-              const SizedBox(height: 24),
-              // 저장 버튼
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _onSave,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.slate800,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          isEditing ? AppStrings.save : AppStrings.add,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
-              ),
-            ],
+    final mediaQuery = MediaQuery.of(context);
+    final keyboardHeight = mediaQuery.viewInsets.bottom;
+    final screenHeight = mediaQuery.size.height;
+    final safeAreaBottom = mediaQuery.padding.bottom;
+
+    // 키보드가 올라오면 사용 가능한 높이 계산
+    final availableHeight = screenHeight - keyboardHeight;
+    final maxSheetHeight = availableHeight * 0.9;
+
+    // 키보드가 올라왔을 때는 safeArea 패딩 불필요
+    final bottomPadding = keyboardHeight > 0 ? 0.0 : safeAreaBottom;
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: maxSheetHeight),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHeader(),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              child: _buildContent(),
+            ),
           ),
+          _buildFooter(bottomPadding),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: AppColors.slate200, width: 1),
         ),
-      );
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              isEditing ? AppStrings.categoryEdit : AppStrings.categoryAdd,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: AppColors.slate800,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: IconButton(
+              onPressed: () => Get.back(),
+              icon: const Icon(Icons.close, size: 22),
+              color: AppColors.slate600,
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shape: const CircleBorder(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(AppStrings.categoryName),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _nameController,
+          decoration: InputDecoration(
+            hintText: '예: 공부',
+            hintStyle: const TextStyle(color: AppColors.slate400),
+            filled: true,
+            fillColor: AppColors.slate50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+          ),
+          textInputAction: TextInputAction.done,
+        ),
+        const SizedBox(height: 20),
+        _buildLabel(AppStrings.categoryColor),
+        const SizedBox(height: 12),
+        _buildColorSelector(),
+      ],
+    );
+  }
+
+  Widget _buildFooter(double safeAreaBottom) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + safeAreaBottom),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: AppColors.slate200, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 48,
+              child: OutlinedButton(
+                onPressed: _isLoading ? null : () => Get.back(),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.slate700,
+                  side: const BorderSide(color: AppColors.slate300),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  AppStrings.cancel,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: SizedBox(
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _onSave,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.slate900,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: AppColors.slate300,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        isEditing ? AppStrings.save : AppStrings.add,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildLabel(String text) {
@@ -182,27 +260,26 @@ class _CategoryFormBottomSheetState extends State<CategoryFormBottomSheet> {
           onTap: () => setState(() => _selectedColorHex = colorHex),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: isSelected
-                  ? Border.all(color: AppColors.slate800, width: 3)
-                  : null,
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      )
-                    ]
-                  : null,
+              color: color.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isSelected ? AppColors.slate900 : AppColors.slate200,
+                width: isSelected ? 2 : 1,
+              ),
             ),
-            child: isSelected
-                ? const Icon(Icons.check, color: Colors.white, size: 20)
-                : null,
+            child: Center(
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
           ),
         );
       }).toList(),
@@ -212,7 +289,6 @@ class _CategoryFormBottomSheetState extends State<CategoryFormBottomSheet> {
   Future<void> _onSave() async {
     final name = _nameController.text.trim();
 
-    // 유효성 검사: 빈 이름
     if (name.isEmpty) {
       Get.snackbar(
         '입력 오류',
@@ -223,7 +299,6 @@ class _CategoryFormBottomSheetState extends State<CategoryFormBottomSheet> {
       return;
     }
 
-    // 유효성 검사: 중복 이름
     if (widget.isDuplicateName(name, excludeId: widget.category?.id)) {
       Get.snackbar(
         '입력 오류',

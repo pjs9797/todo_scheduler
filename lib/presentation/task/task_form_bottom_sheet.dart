@@ -34,10 +34,7 @@ class TaskFormBottomSheet extends StatefulWidget {
         onSave: onSave,
       ),
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
     );
   }
 
@@ -72,127 +69,210 @@ class _TaskFormBottomSheetState extends State<TaskFormBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final bottomPadding = bottomInset > 0 ? 20.0 + bottomInset : 24.0;
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPadding),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 핸들바
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.slate300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              // 제목
-              Text(
-                isEditing ? AppStrings.taskEdit : AppStrings.taskAdd,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.slate800,
-                ),
-              ),
-              const SizedBox(height: 20),
-              // 할 일 이름
-              _buildLabel(AppStrings.taskName),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  hintText: AppStrings.taskNameHint,
-                  hintStyle: TextStyle(color: AppColors.slate400),
-                  filled: true,
-                  fillColor: AppColors.slate50,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                ),
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 16),
-              // 소요 시간
-              _buildLabel(AppStrings.taskDuration),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _minutesController,
-                decoration: InputDecoration(
-                  hintText: AppStrings.taskDurationHint,
-                  hintStyle: TextStyle(color: AppColors.slate400),
-                  helperText: AppStrings.taskDurationHelper,
-                  helperStyle: TextStyle(color: AppColors.slate400),
-                  filled: true,
-                  fillColor: AppColors.slate50,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  suffixText: '분',
-                  suffixStyle: TextStyle(color: AppColors.slate600),
-                ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                textInputAction: TextInputAction.done,
-              ),
-              const SizedBox(height: 16),
-              // 카테고리
-              _buildLabel(AppStrings.taskCategory),
-              const SizedBox(height: 8),
-              _buildCategorySelector(),
-              const SizedBox(height: 24),
-              // 저장 버튼
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _onSave,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.slate800,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          isEditing ? AppStrings.save : AppStrings.add,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
-              ),
-            ],
+    final mediaQuery = MediaQuery.of(context);
+    final keyboardHeight = mediaQuery.viewInsets.bottom;
+    final screenHeight = mediaQuery.size.height;
+    final safeAreaBottom = mediaQuery.padding.bottom;
+
+    // 키보드가 올라오면 사용 가능한 높이 계산
+    final availableHeight = screenHeight - keyboardHeight;
+    final maxSheetHeight = availableHeight * 0.9;
+
+    // 키보드가 올라왔을 때는 safeArea 패딩 불필요
+    final bottomPadding = keyboardHeight > 0 ? 0.0 : safeAreaBottom;
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: maxSheetHeight),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHeader(),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              child: _buildContent(),
+            ),
           ),
+          _buildFooter(bottomPadding),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: AppColors.slate200, width: 1),
         ),
-      );
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              isEditing ? AppStrings.taskEdit : AppStrings.taskAdd,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: AppColors.slate800,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: IconButton(
+              onPressed: () => Get.back(),
+              icon: const Icon(Icons.close, size: 22),
+              color: AppColors.slate600,
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shape: const CircleBorder(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 할 일 이름
+        _buildLabel(AppStrings.taskName),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _titleController,
+          decoration: InputDecoration(
+            hintText: AppStrings.taskNameHint,
+            hintStyle: const TextStyle(color: AppColors.slate400),
+            filled: true,
+            fillColor: AppColors.slate50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+          ),
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 20),
+        // 소요 시간
+        _buildLabel(AppStrings.taskDuration),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _minutesController,
+          decoration: InputDecoration(
+            hintText: AppStrings.taskDurationHint,
+            hintStyle: const TextStyle(color: AppColors.slate400),
+            helperText: AppStrings.taskDurationHelper,
+            helperStyle: const TextStyle(color: AppColors.slate400, fontSize: 12),
+            filled: true,
+            fillColor: AppColors.slate50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            suffixText: '분',
+            suffixStyle: const TextStyle(color: AppColors.slate600),
+          ),
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textInputAction: TextInputAction.done,
+        ),
+        const SizedBox(height: 20),
+        // 카테고리
+        _buildLabel(AppStrings.taskCategory),
+        const SizedBox(height: 12),
+        _buildCategorySelector(),
+      ],
+    );
+  }
+
+  Widget _buildFooter(double bottomPadding) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + bottomPadding),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: AppColors.slate200, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 48,
+              child: OutlinedButton(
+                onPressed: _isLoading ? null : () => Get.back(),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.slate700,
+                  side: const BorderSide(color: AppColors.slate300),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  AppStrings.cancel,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: SizedBox(
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _onSave,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.slate900,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: AppColors.slate300,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        isEditing ? AppStrings.save : AppStrings.add,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildLabel(String text) {
@@ -232,7 +312,6 @@ class _TaskFormBottomSheetState extends State<TaskFormBottomSheet> {
     final title = _titleController.text.trim();
     final minutesText = _minutesController.text.trim();
 
-    // 유효성 검사
     if (title.isEmpty) {
       Get.snackbar(
         '입력 오류',
@@ -300,7 +379,7 @@ class _CategoryChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? chipColor : Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? chipColor : AppColors.slate300,
             width: 1,
