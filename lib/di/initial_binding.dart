@@ -53,6 +53,7 @@ class InitialBinding extends Bindings {
           updateTaskUseCase: Get.find<UpdateTaskUseCase>(),
           deleteTaskUseCase: Get.find<DeleteTaskUseCase>(),
           reorderTasksUseCase: Get.find<ReorderTasksUseCase>(),
+          updateCategoryUseCase: Get.find<UpdateCategoryUseCase>(),
           calculateStartTimeUseCase: Get.find<CalculateStartTimeUseCase>(),
         ));
 

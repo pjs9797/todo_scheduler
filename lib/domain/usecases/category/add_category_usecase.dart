@@ -12,11 +12,15 @@ class AddCategoryUseCase {
   /// 카테고리 추가
   /// [name]: 카테고리 이름
   /// [colorHex]: 카테고리 색상 (Hex)
+  /// [endTimeHour]: 완료 시간 (시)
+  /// [endTimeMinute]: 완료 시간 (분)
   ///
   /// Throws [ArgumentError] if name is empty or duplicate
   Future<CategoryEntity> call({
     required String name,
     required String colorHex,
+    int endTimeHour = 9,
+    int endTimeMinute = 0,
   }) async {
     // 유효성 검사: 빈 이름
     final trimmedName = name.trim();
@@ -39,6 +43,8 @@ class AddCategoryUseCase {
       name: trimmedName,
       colorHex: colorHex,
       sortOrder: sortOrder,
+      endTimeHour: endTimeHour,
+      endTimeMinute: endTimeMinute,
       createdAt: DateTime.now(),
     );
 

@@ -64,13 +64,11 @@ class _CategoryFormBottomSheetState extends State<CategoryFormBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = bottomInset > 0 ? 20.0 + bottomInset : 24.0;
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPadding),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,8 +156,7 @@ class _CategoryFormBottomSheetState extends State<CategoryFormBottomSheet> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildLabel(String text) {

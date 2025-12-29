@@ -20,12 +20,20 @@ class CategoryModel extends HiveObject {
   @HiveField(4)
   final DateTime createdAt;
 
+  @HiveField(5, defaultValue: 9)
+  final int endTimeHour;
+
+  @HiveField(6, defaultValue: 0)
+  final int endTimeMinute;
+
   CategoryModel({
     required this.id,
     required this.name,
     required this.colorHex,
     required this.sortOrder,
     required this.createdAt,
+    this.endTimeHour = 9,
+    this.endTimeMinute = 0,
   });
 
   /// Entity -> Model 변환
@@ -36,6 +44,8 @@ class CategoryModel extends HiveObject {
       colorHex: entity.colorHex,
       sortOrder: entity.sortOrder,
       createdAt: entity.createdAt,
+      endTimeHour: entity.endTimeHour,
+      endTimeMinute: entity.endTimeMinute,
     );
   }
 
@@ -47,6 +57,8 @@ class CategoryModel extends HiveObject {
       colorHex: colorHex,
       sortOrder: sortOrder,
       createdAt: createdAt,
+      endTimeHour: endTimeHour,
+      endTimeMinute: endTimeMinute,
     );
   }
 
@@ -57,6 +69,8 @@ class CategoryModel extends HiveObject {
     String? colorHex,
     int? sortOrder,
     DateTime? createdAt,
+    int? endTimeHour,
+    int? endTimeMinute,
   }) {
     return CategoryModel(
       id: id ?? this.id,
@@ -64,6 +78,8 @@ class CategoryModel extends HiveObject {
       colorHex: colorHex ?? this.colorHex,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
+      endTimeHour: endTimeHour ?? this.endTimeHour,
+      endTimeMinute: endTimeMinute ?? this.endTimeMinute,
     );
   }
 }

@@ -11,15 +11,21 @@ class UpdateCategoryUseCase {
   /// [category]: 수정할 카테고리 (id로 식별)
   /// [name]: 새 이름 (optional)
   /// [colorHex]: 새 색상 (optional)
+  /// [endTimeHour]: 새 완료 시간 - 시 (optional)
+  /// [endTimeMinute]: 새 완료 시간 - 분 (optional)
   ///
   /// Throws [ArgumentError] if name is empty or duplicate
   Future<CategoryEntity> call({
     required CategoryEntity category,
     String? name,
     String? colorHex,
+    int? endTimeHour,
+    int? endTimeMinute,
   }) async {
     final newName = name?.trim() ?? category.name;
     final newColorHex = colorHex ?? category.colorHex;
+    final newEndTimeHour = endTimeHour ?? category.endTimeHour;
+    final newEndTimeMinute = endTimeMinute ?? category.endTimeMinute;
 
     // 유효성 검사: 빈 이름
     if (newName.isEmpty) {
@@ -38,6 +44,8 @@ class UpdateCategoryUseCase {
     final updated = category.copyWith(
       name: newName,
       colorHex: newColorHex,
+      endTimeHour: newEndTimeHour,
+      endTimeMinute: newEndTimeMinute,
     );
 
     // 저장

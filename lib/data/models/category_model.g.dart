@@ -22,13 +22,15 @@ class CategoryModelAdapter extends TypeAdapter<CategoryModel> {
       colorHex: fields[2] as String,
       sortOrder: fields[3] as int,
       createdAt: fields[4] as DateTime,
+      endTimeHour: fields[5] == null ? 9 : fields[5] as int,
+      endTimeMinute: fields[6] == null ? 0 : fields[6] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, CategoryModel obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -38,7 +40,11 @@ class CategoryModelAdapter extends TypeAdapter<CategoryModel> {
       ..writeByte(3)
       ..write(obj.sortOrder)
       ..writeByte(4)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(5)
+      ..write(obj.endTimeHour)
+      ..writeByte(6)
+      ..write(obj.endTimeMinute);
   }
 
   @override

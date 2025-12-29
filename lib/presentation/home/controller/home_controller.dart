@@ -11,6 +11,7 @@ class HomeController extends GetxController {
   final UpdateTaskUseCase _updateTaskUseCase;
   final DeleteTaskUseCase _deleteTaskUseCase;
   final ReorderTasksUseCase _reorderTasksUseCase;
+  final UpdateCategoryUseCase _updateCategoryUseCase;
   final CalculateStartTimeUseCase _calculateStartTimeUseCase;
 
   HomeController({
@@ -20,6 +21,7 @@ class HomeController extends GetxController {
     required UpdateTaskUseCase updateTaskUseCase,
     required DeleteTaskUseCase deleteTaskUseCase,
     required ReorderTasksUseCase reorderTasksUseCase,
+    required UpdateCategoryUseCase updateCategoryUseCase,
     required CalculateStartTimeUseCase calculateStartTimeUseCase,
   })  : _getAllCategoriesUseCase = getAllCategoriesUseCase,
         _getTasksByFilterUseCase = getTasksByFilterUseCase,
@@ -27,6 +29,7 @@ class HomeController extends GetxController {
         _updateTaskUseCase = updateTaskUseCase,
         _deleteTaskUseCase = deleteTaskUseCase,
         _reorderTasksUseCase = reorderTasksUseCase,
+        _updateCategoryUseCase = updateCategoryUseCase,
         _calculateStartTimeUseCase = calculateStartTimeUseCase;
 
   // ==================== State ====================
@@ -40,12 +43,9 @@ class HomeController extends GetxController {
   /// 필터된 할 일 목록 (그룹별)
   final taskGroups = <TaskGroup>[].obs;
 
-  /// 완료 시간 (시, 분)
-  final endTimeHour = 22.obs;
-  final endTimeMinute = 30.obs;
-
-  /// 시작 시간 결과
-  final Rx<StartTimeResult?> startTimeResult = Rx<StartTimeResult?>(null);
+  /// 미분류 완료 시간 (시, 분)
+  final unassignedEndTimeHour = 9.obs;
+  final unassignedEndTimeMinute = 0.obs;
 
   /// 로딩 상태
   final isLoading = false.obs;
@@ -56,15 +56,8 @@ class HomeController extends GetxController {
   int get totalMinutes {
     return taskGroups.fold<int>(
       0,
-      (sum, group) => sum + group.tasks.fold<int>(0, (s, t) => s + t.minutes),
+      (sum, group) => sum + group.totalMinutes,
     );
-  }
-
-  /// 완료 시간 문자열
-  String get endTimeString {
-    final h = endTimeHour.value.toString().padLeft(2, '0');
-    final m = endTimeMinute.value.toString().padLeft(2, '0');
-    return '$h:$m';
   }
 
   // ==================== Lifecycle ====================
@@ -85,7 +78,6 @@ class HomeController extends GetxController {
         _loadCategories(),
         _loadTasks(),
       ]);
-      _calculateStartTime();
     } finally {
       isLoading.value = false;
     }
@@ -109,11 +101,20 @@ class HomeController extends GetxController {
           final tasks = await _getTasksByFilterUseCase(
             TaskFilterByCategory(category.id),
           );
+          final totalMins = tasks.fold<int>(0, (s, t) => s + t.minutes);
+          final startTime = _calculateStartTimeUseCase(
+            endHour: category.endTimeHour,
+            endMinute: category.endTimeMinute,
+            totalMinutes: totalMins,
+          );
           groups.add(TaskGroup(
             key: 'cat:${category.id}',
             title: category.name,
             colorHex: category.colorHex,
             categoryId: category.id,
+            endTimeHour: category.endTimeHour,
+            endTimeMinute: category.endTimeMinute,
+            startTimeResult: startTime,
             tasks: tasks,
           ));
         }
@@ -121,22 +122,40 @@ class HomeController extends GetxController {
         final unassigned = await _getTasksByFilterUseCase(
           const TaskFilterUnassigned(),
         );
+        final unassignedMins = unassigned.fold<int>(0, (s, t) => s + t.minutes);
+        final unassignedStart = _calculateStartTimeUseCase(
+          endHour: unassignedEndTimeHour.value,
+          endMinute: unassignedEndTimeMinute.value,
+          totalMinutes: unassignedMins,
+        );
         groups.add(TaskGroup(
           key: 'unassigned',
           title: '미분류',
           colorHex: '#64748B',
           categoryId: null,
+          endTimeHour: unassignedEndTimeHour.value,
+          endTimeMinute: unassignedEndTimeMinute.value,
+          startTimeResult: unassignedStart,
           tasks: unassigned,
         ));
         break;
 
       case TaskFilterUnassigned():
         final tasks = await _getTasksByFilterUseCase(filter);
+        final totalMins = tasks.fold<int>(0, (s, t) => s + t.minutes);
+        final startTime = _calculateStartTimeUseCase(
+          endHour: unassignedEndTimeHour.value,
+          endMinute: unassignedEndTimeMinute.value,
+          totalMinutes: totalMins,
+        );
         groups.add(TaskGroup(
           key: 'unassigned',
           title: '미분류',
           colorHex: '#64748B',
           categoryId: null,
+          endTimeHour: unassignedEndTimeHour.value,
+          endTimeMinute: unassignedEndTimeMinute.value,
+          startTimeResult: startTime,
           tasks: tasks,
         ));
         break;
@@ -144,11 +163,22 @@ class HomeController extends GetxController {
       case TaskFilterByCategory(:final categoryId):
         final category = allCategories.firstWhereOrNull((c) => c.id == categoryId);
         final tasks = await _getTasksByFilterUseCase(filter);
+        final totalMins = tasks.fold<int>(0, (s, t) => s + t.minutes);
+        final endHour = category?.endTimeHour ?? 22;
+        final endMinute = category?.endTimeMinute ?? 0;
+        final startTime = _calculateStartTimeUseCase(
+          endHour: endHour,
+          endMinute: endMinute,
+          totalMinutes: totalMins,
+        );
         groups.add(TaskGroup(
           key: 'cat:$categoryId',
           title: category?.name ?? '카테고리',
           colorHex: category?.colorHex ?? '#64748B',
           categoryId: categoryId,
+          endTimeHour: endHour,
+          endTimeMinute: endMinute,
+          startTimeResult: startTime,
           tasks: tasks,
         ));
         break;
@@ -162,25 +192,31 @@ class HomeController extends GetxController {
   /// 필터 변경
   void setFilter(TaskFilter filter) {
     currentFilter.value = filter;
-    _loadTasks().then((_) => _calculateStartTime());
+    _loadTasks();
   }
 
   // ==================== Time ====================
 
-  /// 완료 시간 설정
-  void setEndTime(TimeOfDay time) {
-    endTimeHour.value = time.hour;
-    endTimeMinute.value = time.minute;
-    _calculateStartTime();
-  }
-
-  /// 시작 시간 계산
-  void _calculateStartTime() {
-    startTimeResult.value = _calculateStartTimeUseCase(
-      endHour: endTimeHour.value,
-      endMinute: endTimeMinute.value,
-      totalMinutes: totalMinutes,
-    );
+  /// 카테고리 완료 시간 설정
+  Future<void> setCategoryEndTime(String? categoryId, TimeOfDay time) async {
+    if (categoryId == null) {
+      // 미분류
+      unassignedEndTimeHour.value = time.hour;
+      unassignedEndTimeMinute.value = time.minute;
+      await _loadTasks();
+    } else {
+      // 카테고리
+      final category = categories.firstWhereOrNull((c) => c.id == categoryId);
+      if (category != null) {
+        await _updateCategoryUseCase(
+          category: category,
+          endTimeHour: time.hour,
+          endTimeMinute: time.minute,
+        );
+        await _loadCategories();
+        await _loadTasks();
+      }
+    }
   }
 
   // ==================== Task Actions ====================
@@ -193,7 +229,6 @@ class HomeController extends GetxController {
       categoryId: categoryId,
     );
     await _loadTasks();
-    _calculateStartTime();
   }
 
   /// 할 일 수정
@@ -210,14 +245,12 @@ class HomeController extends GetxController {
       categoryId: () => categoryId,
     );
     await _loadTasks();
-    _calculateStartTime();
   }
 
   /// 할 일 삭제
   Future<void> deleteTask(String taskId) async {
     await _deleteTaskUseCase(taskId);
     await _loadTasks();
-    _calculateStartTime();
   }
 
   /// 할 일 순서 변경
@@ -234,12 +267,23 @@ class HomeController extends GetxController {
     final task = tasks.removeAt(oldIndex);
     tasks.insert(newIndex, task);
 
+    // 시작 시간 재계산
+    final totalMins = tasks.fold<int>(0, (s, t) => s + t.minutes);
+    final startTime = _calculateStartTimeUseCase(
+      endHour: group.endTimeHour,
+      endMinute: group.endTimeMinute,
+      totalMinutes: totalMins,
+    );
+
     // UI 즉시 업데이트
     taskGroups[groupIndex] = TaskGroup(
       key: group.key,
       title: group.title,
       colorHex: group.colorHex,
       categoryId: group.categoryId,
+      endTimeHour: group.endTimeHour,
+      endTimeMinute: group.endTimeMinute,
+      startTimeResult: startTime,
       tasks: tasks,
     );
 
@@ -260,6 +304,9 @@ class TaskGroup {
   final String title;
   final String colorHex;
   final String? categoryId;
+  final int endTimeHour;
+  final int endTimeMinute;
+  final StartTimeResult startTimeResult;
   final List<TaskEntity> tasks;
 
   const TaskGroup({
@@ -267,6 +314,19 @@ class TaskGroup {
     required this.title,
     required this.colorHex,
     required this.categoryId,
+    required this.endTimeHour,
+    required this.endTimeMinute,
+    required this.startTimeResult,
     required this.tasks,
   });
+
+  /// 총 소요 시간 (분)
+  int get totalMinutes => tasks.fold<int>(0, (s, t) => s + t.minutes);
+
+  /// 완료 시간 문자열
+  String get endTimeString {
+    final h = endTimeHour.toString().padLeft(2, '0');
+    final m = endTimeMinute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
 }

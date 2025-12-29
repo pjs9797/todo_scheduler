@@ -5,6 +5,8 @@ class CategoryEntity {
   final String name;
   final String colorHex;
   final int sortOrder;
+  final int endTimeHour; // 완료 시간 (시)
+  final int endTimeMinute; // 완료 시간 (분)
   final DateTime createdAt;
 
   const CategoryEntity({
@@ -12,8 +14,17 @@ class CategoryEntity {
     required this.name,
     required this.colorHex,
     required this.sortOrder,
+    this.endTimeHour = 9,
+    this.endTimeMinute = 0,
     required this.createdAt,
   });
+
+  /// 완료 시간 문자열 (HH:mm)
+  String get endTimeString {
+    final h = endTimeHour.toString().padLeft(2, '0');
+    final m = endTimeMinute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
 
   /// copyWith 패턴
   CategoryEntity copyWith({
@@ -21,6 +32,8 @@ class CategoryEntity {
     String? name,
     String? colorHex,
     int? sortOrder,
+    int? endTimeHour,
+    int? endTimeMinute,
     DateTime? createdAt,
   }) {
     return CategoryEntity(
@@ -28,6 +41,8 @@ class CategoryEntity {
       name: name ?? this.name,
       colorHex: colorHex ?? this.colorHex,
       sortOrder: sortOrder ?? this.sortOrder,
+      endTimeHour: endTimeHour ?? this.endTimeHour,
+      endTimeMinute: endTimeMinute ?? this.endTimeMinute,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -40,16 +55,18 @@ class CategoryEntity {
         other.name == name &&
         other.colorHex == colorHex &&
         other.sortOrder == sortOrder &&
+        other.endTimeHour == endTimeHour &&
+        other.endTimeMinute == endTimeMinute &&
         other.createdAt == createdAt;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, name, colorHex, sortOrder, createdAt);
+    return Object.hash(id, name, colorHex, sortOrder, endTimeHour, endTimeMinute, createdAt);
   }
 
   @override
   String toString() {
-    return 'CategoryEntity(id: $id, name: $name, colorHex: $colorHex, sortOrder: $sortOrder)';
+    return 'CategoryEntity(id: $id, name: $name, colorHex: $colorHex, endTime: $endTimeString)';
   }
 }

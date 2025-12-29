@@ -6,7 +6,6 @@ import '../category/category_management_screen.dart';
 import '../task/task_form_bottom_sheet.dart';
 import 'controller/home_controller.dart';
 import 'widgets/filter_chips.dart';
-import 'widgets/time_card.dart';
 import 'widgets/task_group_card.dart';
 
 /// 홈 화면
@@ -32,11 +31,9 @@ class HomeScreen extends GetView<HomeController> {
                 SliverToBoxAdapter(child: _buildTotalDuration()),
                 // 필터 칩
                 SliverToBoxAdapter(child: _buildFilterChips()),
-                // 시간 카드
-                SliverToBoxAdapter(child: _buildTimeCards()),
                 // 할 일 목록
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
                   sliver: _buildTaskList(),
                 ),
               ],
@@ -139,29 +136,6 @@ class HomeScreen extends GetView<HomeController> {
     );
   }
 
-  /// 시간 카드들
-  Widget _buildTimeCards() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Column(
-        children: [
-          // 완료 시간 카드
-          Obx(() => EndTimeCard(
-                hour: controller.endTimeHour.value,
-                minute: controller.endTimeMinute.value,
-                onTimePicked: controller.setEndTime,
-              )),
-          const SizedBox(height: 12),
-          // 시작 시간 결과 카드
-          Obx(() => StartTimeCard(
-                result: controller.startTimeResult.value,
-                totalMinutes: controller.totalMinutes,
-              )),
-        ],
-      ),
-    );
-  }
-
   /// 할 일 목록
   Widget _buildTaskList() {
     return Obx(() {
@@ -187,6 +161,9 @@ class HomeScreen extends GetView<HomeController> {
                 onDeleteTask: _onDeleteTask,
                 onReorder: (oldIndex, newIndex) {
                   controller.reorderTasks(group.categoryId, oldIndex, newIndex);
+                },
+                onEndTimeChanged: (time) {
+                  controller.setCategoryEndTime(group.categoryId, time);
                 },
               ),
             );
