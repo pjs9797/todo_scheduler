@@ -25,7 +25,21 @@
       "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/presentation/category/widgets )",
       "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/presentation/common/widgets )",
       "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/di)",
-      "Bash(dart run build_runner:*)"
+      "Bash(dart run build_runner:*)",
+      "Bash(flutter devices:*)",
+      "Bash(flutter emulators:*)",
+      "Bash(adb:*)",
+      "Bash(flutter doctor:*)",
+      "Bash(flutter run:*)",
+      "Bash(cat:*)",
+      "Bash(/Users/pjs1997/Library/Android/sdk/cmdline-tools/latest/bin/sdkmanager:*)",
+      "Bash(bun --version:*)",
+      "Bash(curl:*)",
+      "Bash(/Users/pjs1997/.bun/bin/bun:*)",
+      "Bash(bash -s \"bun-v1.2.2\")",
+      "Bash(/Users/pjs1997/Library/Android/sdk/platform-tools/adb devices -l)",
+      "Bash(/Users/pjs1997/Library/Android/sdk/platform-tools/adb:*)",
+      "Bash(/Users/pjs1997/Library/Android/sdk/cmdline-tools/latest/bin/avdmanager list device)"
     ]
   }
 }

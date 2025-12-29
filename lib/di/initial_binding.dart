@@ -56,12 +56,15 @@ class InitialBinding extends Bindings {
           calculateStartTimeUseCase: Get.find<CalculateStartTimeUseCase>(),
         ));
 
-    Get.lazyPut(() => CategoryController(
-          getAllCategoriesUseCase: Get.find<GetAllCategoriesUseCase>(),
-          addCategoryUseCase: Get.find<AddCategoryUseCase>(),
-          updateCategoryUseCase: Get.find<UpdateCategoryUseCase>(),
-          deleteCategoryUseCase: Get.find<DeleteCategoryUseCase>(),
-          reorderCategoriesUseCase: Get.find<ReorderCategoriesUseCase>(),
-        ));
+    Get.lazyPut(
+      () => CategoryController(
+        getAllCategoriesUseCase: Get.find<GetAllCategoriesUseCase>(),
+        addCategoryUseCase: Get.find<AddCategoryUseCase>(),
+        updateCategoryUseCase: Get.find<UpdateCategoryUseCase>(),
+        deleteCategoryUseCase: Get.find<DeleteCategoryUseCase>(),
+        reorderCategoriesUseCase: Get.find<ReorderCategoriesUseCase>(),
+      ),
+      fenix: true,
+    );
   }
 }
