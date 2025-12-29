@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/core.dart';
 import 'data/data.dart';
+import 'di/bindings.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,11 +12,9 @@ void main() async {
   // Hive 초기화
   await Hive.initFlutter();
 
-  // LocalDataSource 초기화
+  // LocalDataSource 초기화 (Bindings보다 먼저 등록 필요)
   final localDataSource = LocalDataSource();
   await localDataSource.init();
-
-  // GetX에 등록 (6단계에서 Bindings로 이동 예정)
   Get.put(localDataSource);
 
   runApp(const TodoSchedulerApp());
@@ -30,6 +29,7 @@ class TodoSchedulerApp extends StatelessWidget {
       title: AppStrings.appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      initialBinding: InitialBinding(),
       home: const PlaceholderHomePage(),
     );
   }
@@ -50,13 +50,13 @@ class PlaceholderHomePage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.storage_outlined,
+              Icons.link_outlined,
               size: 64,
               color: AppColors.slate400,
             ),
             const SizedBox(height: 16),
             const Text(
-              '4단계 완료!',
+              '6단계 완료!',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -64,7 +64,7 @@ class PlaceholderHomePage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Data 레이어 (Hive DB + Repository) 구현 완료',
+              'GetX DI Bindings 설정 완료',
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.slate500,

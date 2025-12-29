@@ -1,2 +1,2 @@
 // GetX Dependency Injection Bindings
-// Will be implemented in step 6
+export 'initial_binding.dart';
