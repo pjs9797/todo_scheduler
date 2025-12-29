@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/core.dart';
 import '../../domain/domain.dart';
+import '../category/category_management_screen.dart';
 import '../task/task_form_bottom_sheet.dart';
 import 'controller/home_controller.dart';
 import 'widgets/filter_chips.dart';
@@ -308,8 +309,9 @@ class HomeScreen extends GetView<HomeController> {
     }
   }
 
-  void _onOpenCategoryManagement() {
-    // 9단계에서 구현
-    Get.snackbar('카테고리 관리', '9단계에서 구현 예정');
+  void _onOpenCategoryManagement() async {
+    await Get.to(() => const CategoryManagementScreen());
+    // 카테고리 변경 시 홈 화면 새로고침
+    controller.loadData();
   }
 }

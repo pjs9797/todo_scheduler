@@ -16,14 +16,14 @@ class AppColors {
   static const Color slate800 = Color(0xFF1E293B);
   static const Color slate900 = Color(0xFF0F172A);
 
-  // 카테고리 기본 색상
-  static const List<Color> categoryColors = [
-    Color(0xFF2563EB), // blue
-    Color(0xFF16A34A), // green
-    Color(0xFFDC2626), // red
-    Color(0xFF9333EA), // purple
-    Color(0xFFF59E0B), // amber
-    Color(0xFF0F766E), // teal
+  // 카테고리 기본 색상 (hex 문자열)
+  static const List<String> categoryColors = [
+    '#2563EB', // blue
+    '#16A34A', // green
+    '#DC2626', // red
+    '#9333EA', // purple
+    '#F59E0B', // amber
+    '#0F766E', // teal
   ];
 
   // 상태 색상

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../data/data.dart';
 import '../domain/domain.dart';
+import '../presentation/category/controller/category_controller.dart';
 import '../presentation/home/controller/home_controller.dart';
 
 /// 앱 시작 시 의존성 주입
@@ -52,6 +53,13 @@ class InitialBinding extends Bindings {
           updateTaskUseCase: Get.find<UpdateTaskUseCase>(),
           deleteTaskUseCase: Get.find<DeleteTaskUseCase>(),
           calculateStartTimeUseCase: Get.find<CalculateStartTimeUseCase>(),
+        ));
+
+    Get.lazyPut(() => CategoryController(
+          getAllCategoriesUseCase: Get.find<GetAllCategoriesUseCase>(),
+          addCategoryUseCase: Get.find<AddCategoryUseCase>(),
+          updateCategoryUseCase: Get.find<UpdateCategoryUseCase>(),
+          deleteCategoryUseCase: Get.find<DeleteCategoryUseCase>(),
         ));
   }
 }
