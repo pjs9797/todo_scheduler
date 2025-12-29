@@ -48,6 +48,7 @@ class AppStrings {
   static const String edit = '수정';
   static const String add = '추가';
   static const String reset = '초기화';
+  static const String change = '변경';
 
   // 토스트 메시지
   static const String categorySaved = '카테고리를 저장했어요.';
