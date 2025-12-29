@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/core.dart';
 import '../../domain/domain.dart';
+import '../task/task_form_bottom_sheet.dart';
 import 'controller/home_controller.dart';
 import 'widgets/filter_chips.dart';
 import 'widgets/time_card.dart';
@@ -241,18 +242,38 @@ class HomeScreen extends GetView<HomeController> {
     if (filter is TaskFilterByCategory) {
       categoryId = filter.categoryId;
     }
-    // 8단계에서 구현
-    Get.snackbar('할 일 추가', '8단계에서 구현 예정 (categoryId: $categoryId)');
+    TaskFormBottomSheet.show(
+      categories: controller.categories,
+      initialCategoryId: categoryId,
+      onSave: (title, minutes, catId) async {
+        await controller.addTask(title, minutes, catId);
+      },
+    );
   }
 
   void _onAddTaskToCategory(String? categoryId) {
-    // 8단계에서 구현
-    Get.snackbar('할 일 추가', '8단계에서 구현 예정 (categoryId: $categoryId)');
+    TaskFormBottomSheet.show(
+      categories: controller.categories,
+      initialCategoryId: categoryId,
+      onSave: (title, minutes, catId) async {
+        await controller.addTask(title, minutes, catId);
+      },
+    );
   }
 
   void _onEditTask(TaskEntity task) {
-    // 8단계에서 구현
-    Get.snackbar('할 일 수정', '8단계에서 구현 예정 (${task.title})');
+    TaskFormBottomSheet.show(
+      categories: controller.categories,
+      task: task,
+      onSave: (title, minutes, categoryId) async {
+        await controller.updateTask(
+          task: task,
+          title: title,
+          minutes: minutes,
+          categoryId: categoryId,
+        );
+      },
+    );
   }
 
   void _onDeleteTask(TaskEntity task) async {

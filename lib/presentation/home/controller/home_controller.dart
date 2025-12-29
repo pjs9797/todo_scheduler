@@ -7,16 +7,22 @@ class HomeController extends GetxController {
   // UseCases
   final GetAllCategoriesUseCase _getAllCategoriesUseCase;
   final GetTasksByFilterUseCase _getTasksByFilterUseCase;
+  final AddTaskUseCase _addTaskUseCase;
+  final UpdateTaskUseCase _updateTaskUseCase;
   final DeleteTaskUseCase _deleteTaskUseCase;
   final CalculateStartTimeUseCase _calculateStartTimeUseCase;
 
   HomeController({
     required GetAllCategoriesUseCase getAllCategoriesUseCase,
     required GetTasksByFilterUseCase getTasksByFilterUseCase,
+    required AddTaskUseCase addTaskUseCase,
+    required UpdateTaskUseCase updateTaskUseCase,
     required DeleteTaskUseCase deleteTaskUseCase,
     required CalculateStartTimeUseCase calculateStartTimeUseCase,
   })  : _getAllCategoriesUseCase = getAllCategoriesUseCase,
         _getTasksByFilterUseCase = getTasksByFilterUseCase,
+        _addTaskUseCase = addTaskUseCase,
+        _updateTaskUseCase = updateTaskUseCase,
         _deleteTaskUseCase = deleteTaskUseCase,
         _calculateStartTimeUseCase = calculateStartTimeUseCase;
 
@@ -175,6 +181,34 @@ class HomeController extends GetxController {
   }
 
   // ==================== Task Actions ====================
+
+  /// 할 일 추가
+  Future<void> addTask(String title, int minutes, String? categoryId) async {
+    await _addTaskUseCase(
+      title: title,
+      minutes: minutes,
+      categoryId: categoryId,
+    );
+    await _loadTasks();
+    _calculateStartTime();
+  }
+
+  /// 할 일 수정
+  Future<void> updateTask({
+    required TaskEntity task,
+    required String title,
+    required int minutes,
+    required String? categoryId,
+  }) async {
+    await _updateTaskUseCase(
+      task: task,
+      title: title,
+      minutes: minutes,
+      categoryId: () => categoryId,
+    );
+    await _loadTasks();
+    _calculateStartTime();
+  }
 
   /// 할 일 삭제
   Future<void> deleteTask(String taskId) async {

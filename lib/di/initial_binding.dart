@@ -48,6 +48,8 @@ class InitialBinding extends Bindings {
     Get.lazyPut(() => HomeController(
           getAllCategoriesUseCase: Get.find<GetAllCategoriesUseCase>(),
           getTasksByFilterUseCase: Get.find<GetTasksByFilterUseCase>(),
+          addTaskUseCase: Get.find<AddTaskUseCase>(),
+          updateTaskUseCase: Get.find<UpdateTaskUseCase>(),
           deleteTaskUseCase: Get.find<DeleteTaskUseCase>(),
           calculateStartTimeUseCase: Get.find<CalculateStartTimeUseCase>(),
         ));
