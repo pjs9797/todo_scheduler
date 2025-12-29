@@ -24,7 +24,8 @@
       "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/presentation/category/controller )",
       "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/presentation/category/widgets )",
       "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/presentation/common/widgets )",
-      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/di)"
+      "Bash(/Users/pjs1997/Desktop/todo_scheduler/lib/di)",
+      "Bash(dart run build_runner:*)"
     ]
   }
 }

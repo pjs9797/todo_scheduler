@@ -3,12 +3,20 @@ import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/core.dart';
+import 'data/data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Hive 초기화
   await Hive.initFlutter();
+
+  // LocalDataSource 초기화
+  final localDataSource = LocalDataSource();
+  await localDataSource.init();
+
+  // GetX에 등록 (6단계에서 Bindings로 이동 예정)
+  Get.put(localDataSource);
 
   runApp(const TodoSchedulerApp());
 }
@@ -42,13 +50,13 @@ class PlaceholderHomePage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.folder_open_outlined,
+              Icons.storage_outlined,
               size: 64,
               color: AppColors.slate400,
             ),
             const SizedBox(height: 16),
             const Text(
-              '2단계 완료!',
+              '4단계 완료!',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -56,7 +64,7 @@ class PlaceholderHomePage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Clean Architecture 폴더 구조 생성 완료',
+              'Data 레이어 (Hive DB + Repository) 구현 완료',
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.slate500,
