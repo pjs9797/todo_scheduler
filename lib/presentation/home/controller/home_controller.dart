@@ -4,48 +4,38 @@ import '../../../domain/domain.dart';
 
 /// 홈 화면 컨트롤러
 class HomeController extends GetxController {
-  // UseCases
+  // UseCases & Repositories
   final GetAllCategoriesUseCase _getAllCategoriesUseCase;
-  final GetTasksByFilterUseCase _getTasksByFilterUseCase;
-  final AddTaskUseCase _addTaskUseCase;
-  final UpdateTaskUseCase _updateTaskUseCase;
-  final DeleteTaskUseCase _deleteTaskUseCase;
-  final ReorderTasksUseCase _reorderTasksUseCase;
   final UpdateCategoryUseCase _updateCategoryUseCase;
   final CalculateStartTimeUseCase _calculateStartTimeUseCase;
+  final TaskTemplateRepository _templateRepository;
+  final CategoryTaskRepository _categoryTaskRepository;
 
   HomeController({
     required GetAllCategoriesUseCase getAllCategoriesUseCase,
-    required GetTasksByFilterUseCase getTasksByFilterUseCase,
-    required AddTaskUseCase addTaskUseCase,
-    required UpdateTaskUseCase updateTaskUseCase,
-    required DeleteTaskUseCase deleteTaskUseCase,
-    required ReorderTasksUseCase reorderTasksUseCase,
     required UpdateCategoryUseCase updateCategoryUseCase,
     required CalculateStartTimeUseCase calculateStartTimeUseCase,
+    required TaskTemplateRepository templateRepository,
+    required CategoryTaskRepository categoryTaskRepository,
   })  : _getAllCategoriesUseCase = getAllCategoriesUseCase,
-        _getTasksByFilterUseCase = getTasksByFilterUseCase,
-        _addTaskUseCase = addTaskUseCase,
-        _updateTaskUseCase = updateTaskUseCase,
-        _deleteTaskUseCase = deleteTaskUseCase,
-        _reorderTasksUseCase = reorderTasksUseCase,
         _updateCategoryUseCase = updateCategoryUseCase,
-        _calculateStartTimeUseCase = calculateStartTimeUseCase;
+        _calculateStartTimeUseCase = calculateStartTimeUseCase,
+        _templateRepository = templateRepository,
+        _categoryTaskRepository = categoryTaskRepository;
 
   // ==================== State ====================
 
   /// 카테고리 목록
   final categories = <CategoryEntity>[].obs;
 
+  /// 템플릿 목록 (캐시)
+  final _templateCache = <String, TaskTemplateEntity>{};
+
   /// 현재 필터
   final Rx<TaskFilter> currentFilter = Rx<TaskFilter>(const TaskFilterAll());
 
   /// 필터된 할 일 목록 (그룹별)
   final taskGroups = <TaskGroup>[].obs;
-
-  /// 미분류 완료 시간 (시, 분)
-  final unassignedEndTimeHour = 9.obs;
-  final unassignedEndTimeMinute = 0.obs;
 
   /// 로딩 상태
   final isLoading = false.obs;
@@ -74,10 +64,9 @@ class HomeController extends GetxController {
   Future<void> loadData() async {
     isLoading.value = true;
     try {
-      await Future.wait([
-        _loadCategories(),
-        _loadTasks(),
-      ]);
+      await _loadCategories();
+      await _loadTemplateCache();
+      await _loadTasks();
     } finally {
       isLoading.value = false;
     }
@@ -88,6 +77,34 @@ class HomeController extends GetxController {
     categories.value = await _getAllCategoriesUseCase();
   }
 
+  /// 템플릿 캐시 로드
+  Future<void> _loadTemplateCache() async {
+    final templates = await _templateRepository.getAll();
+    _templateCache.clear();
+    for (final t in templates) {
+      _templateCache[t.id] = t;
+    }
+  }
+
+  /// 카테고리의 DisplayTask 목록 생성
+  Future<List<DisplayTask>> _getDisplayTasksForCategory(String categoryId) async {
+    final categoryTasks = await _categoryTaskRepository.getByCategoryId(categoryId);
+    final displayTasks = <DisplayTask>[];
+
+    for (final ct in categoryTasks) {
+      final template = _templateCache[ct.taskTemplateId];
+      if (template != null) {
+        displayTasks.add(DisplayTask.fromEntities(
+          categoryTask: ct,
+          template: template,
+        ));
+      }
+    }
+
+    displayTasks.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    return displayTasks;
+  }
+
   /// 할 일 로드 (현재 필터 기준)
   Future<void> _loadTasks() async {
     final filter = currentFilter.value;
@@ -96,12 +113,10 @@ class HomeController extends GetxController {
 
     switch (filter) {
       case TaskFilterAll():
-        // 카테고리별 그룹 + 미분류
+        // 카테고리별 그룹
         for (final category in allCategories) {
-          final tasks = await _getTasksByFilterUseCase(
-            TaskFilterByCategory(category.id),
-          );
-          final totalMins = tasks.fold<int>(0, (s, t) => s + t.minutes);
+          final displayTasks = await _getDisplayTasksForCategory(category.id);
+          final totalMins = displayTasks.fold<int>(0, (s, t) => s + t.minutes);
           final startTime = _calculateStartTimeUseCase(
             endHour: category.endTimeHour,
             endMinute: category.endTimeMinute,
@@ -115,72 +130,36 @@ class HomeController extends GetxController {
             endTimeHour: category.endTimeHour,
             endTimeMinute: category.endTimeMinute,
             startTimeResult: startTime,
-            tasks: tasks,
+            tasks: displayTasks,
           ));
         }
-        // 미분류
-        final unassigned = await _getTasksByFilterUseCase(
-          const TaskFilterUnassigned(),
-        );
-        final unassignedMins = unassigned.fold<int>(0, (s, t) => s + t.minutes);
-        final unassignedStart = _calculateStartTimeUseCase(
-          endHour: unassignedEndTimeHour.value,
-          endMinute: unassignedEndTimeMinute.value,
-          totalMinutes: unassignedMins,
-        );
-        groups.add(TaskGroup(
-          key: 'unassigned',
-          title: '미분류',
-          colorHex: '#64748B',
-          categoryId: null,
-          endTimeHour: unassignedEndTimeHour.value,
-          endTimeMinute: unassignedEndTimeMinute.value,
-          startTimeResult: unassignedStart,
-          tasks: unassigned,
-        ));
         break;
 
       case TaskFilterUnassigned():
-        final tasks = await _getTasksByFilterUseCase(filter);
-        final totalMins = tasks.fold<int>(0, (s, t) => s + t.minutes);
-        final startTime = _calculateStartTimeUseCase(
-          endHour: unassignedEndTimeHour.value,
-          endMinute: unassignedEndTimeMinute.value,
-          totalMinutes: totalMins,
-        );
-        groups.add(TaskGroup(
-          key: 'unassigned',
-          title: '미분류',
-          colorHex: '#64748B',
-          categoryId: null,
-          endTimeHour: unassignedEndTimeHour.value,
-          endTimeMinute: unassignedEndTimeMinute.value,
-          startTimeResult: startTime,
-          tasks: tasks,
-        ));
+        // 새로운 아키텍처에서는 미분류 개념이 없음 (모든 할일은 카테고리에 속함)
         break;
 
       case TaskFilterByCategory(:final categoryId):
         final category = allCategories.firstWhereOrNull((c) => c.id == categoryId);
-        final tasks = await _getTasksByFilterUseCase(filter);
-        final totalMins = tasks.fold<int>(0, (s, t) => s + t.minutes);
-        final endHour = category?.endTimeHour ?? 22;
-        final endMinute = category?.endTimeMinute ?? 0;
-        final startTime = _calculateStartTimeUseCase(
-          endHour: endHour,
-          endMinute: endMinute,
-          totalMinutes: totalMins,
-        );
-        groups.add(TaskGroup(
-          key: 'cat:$categoryId',
-          title: category?.name ?? '카테고리',
-          colorHex: category?.colorHex ?? '#64748B',
-          categoryId: categoryId,
-          endTimeHour: endHour,
-          endTimeMinute: endMinute,
-          startTimeResult: startTime,
-          tasks: tasks,
-        ));
+        if (category != null) {
+          final displayTasks = await _getDisplayTasksForCategory(categoryId);
+          final totalMins = displayTasks.fold<int>(0, (s, t) => s + t.minutes);
+          final startTime = _calculateStartTimeUseCase(
+            endHour: category.endTimeHour,
+            endMinute: category.endTimeMinute,
+            totalMinutes: totalMins,
+          );
+          groups.add(TaskGroup(
+            key: 'cat:$categoryId',
+            title: category.name,
+            colorHex: category.colorHex,
+            categoryId: categoryId,
+            endTimeHour: category.endTimeHour,
+            endTimeMinute: category.endTimeMinute,
+            startTimeResult: startTime,
+            tasks: displayTasks,
+          ));
+        }
         break;
     }
 
@@ -199,68 +178,77 @@ class HomeController extends GetxController {
 
   /// 카테고리 완료 시간 설정
   Future<void> setCategoryEndTime(String? categoryId, TimeOfDay time) async {
-    if (categoryId == null) {
-      // 미분류
-      unassignedEndTimeHour.value = time.hour;
-      unassignedEndTimeMinute.value = time.minute;
+    if (categoryId == null) return;
+
+    final category = categories.firstWhereOrNull((c) => c.id == categoryId);
+    if (category != null) {
+      await _updateCategoryUseCase(
+        category: category,
+        endTimeHour: time.hour,
+        endTimeMinute: time.minute,
+      );
+      await _loadCategories();
       await _loadTasks();
-    } else {
-      // 카테고리
-      final category = categories.firstWhereOrNull((c) => c.id == categoryId);
-      if (category != null) {
-        await _updateCategoryUseCase(
-          category: category,
-          endTimeHour: time.hour,
-          endTimeMinute: time.minute,
-        );
-        await _loadCategories();
-        await _loadTasks();
-      }
     }
   }
 
   // ==================== Task Actions ====================
 
-  /// 할 일 추가
-  Future<void> addTask(String title, int minutes, String? categoryId) async {
-    await _addTaskUseCase(
-      title: title,
-      minutes: minutes,
-      categoryId: categoryId,
-    );
+  /// 카테고리에 할일 추가 (라이브러리에서 선택)
+  Future<void> addTasksToCategory(String categoryId, List<String> templateIds) async {
+    for (final templateId in templateIds) {
+      final exists = await _categoryTaskRepository.exists(
+        categoryId: categoryId,
+        taskTemplateId: templateId,
+      );
+      if (!exists) {
+        final categoryTasks = await _categoryTaskRepository.getByCategoryId(categoryId);
+        final nextSortOrder = categoryTasks.isEmpty
+            ? 0
+            : categoryTasks.map((e) => e.sortOrder).reduce((a, b) => a > b ? a : b) + 1;
+        await _categoryTaskRepository.add(
+          categoryId: categoryId,
+          taskTemplateId: templateId,
+          sortOrder: nextSortOrder,
+        );
+        await _templateRepository.updateLastUsedAt(templateId);
+      }
+    }
+    await _loadTemplateCache();
     await _loadTasks();
   }
 
-  /// 할 일 수정
-  Future<void> updateTask({
-    required TaskEntity task,
+  /// 새 할일 템플릿 생성 후 카테고리에 추가
+  Future<void> createAndAddTask({
     required String title,
     required int minutes,
-    required String? categoryId,
+    required String categoryId,
+    bool isFavorite = false,
   }) async {
-    await _updateTaskUseCase(
-      task: task,
+    final template = await _templateRepository.add(
       title: title,
       minutes: minutes,
-      categoryId: () => categoryId,
+      isFavorite: isFavorite,
     );
-    await _loadTasks();
+    await addTasksToCategory(categoryId, [template.id]);
   }
 
-  /// 할 일 삭제
-  Future<void> deleteTask(String taskId) async {
-    await _deleteTaskUseCase(taskId);
+  /// 카테고리에서 할일 제거
+  Future<void> removeTaskFromCategory(String categoryTaskId) async {
+    await _categoryTaskRepository.delete(categoryTaskId);
     await _loadTasks();
   }
 
   /// 할 일 순서 변경
   Future<void> reorderTasks(String? categoryId, int oldIndex, int newIndex) async {
+    if (categoryId == null) return;
+
     // 해당 그룹 찾기
     final groupIndex = taskGroups.indexWhere((g) => g.categoryId == categoryId);
     if (groupIndex == -1) return;
 
     final group = taskGroups[groupIndex];
-    final tasks = List<TaskEntity>.from(group.tasks);
+    final tasks = List<DisplayTask>.from(group.tasks);
 
     // 순서 조정
     if (newIndex > oldIndex) newIndex--;
@@ -288,7 +276,24 @@ class HomeController extends GetxController {
     );
 
     // DB 저장
-    await _reorderTasksUseCase(tasks);
+    final orderedIds = tasks.map((t) => t.categoryTaskId).toList();
+    await _categoryTaskRepository.reorder(categoryId, orderedIds);
+  }
+
+  /// 모든 템플릿 조회 (할일 선택용)
+  Future<List<TaskTemplateEntity>> getAllTemplates() async {
+    return _templateRepository.getAll();
+  }
+
+  /// 즐겨찾기 템플릿 조회
+  Future<List<TaskTemplateEntity>> getFavoriteTemplates() async {
+    return _templateRepository.getFavorites();
+  }
+
+  /// 카테고리에 이미 추가된 템플릿 ID 목록
+  Future<Set<String>> getAddedTemplateIds(String categoryId) async {
+    final categoryTasks = await _categoryTaskRepository.getByCategoryId(categoryId);
+    return categoryTasks.map((ct) => ct.taskTemplateId).toSet();
   }
 
   /// 데이터 새로고침
@@ -298,7 +303,7 @@ class HomeController extends GetxController {
   }
 }
 
-/// 할 일 그룹 (카테고리 또는 미분류)
+/// 할 일 그룹 (카테고리)
 class TaskGroup {
   final String key;
   final String title;
@@ -307,7 +312,7 @@ class TaskGroup {
   final int endTimeHour;
   final int endTimeMinute;
   final StartTimeResult startTimeResult;
-  final List<TaskEntity> tasks;
+  final List<DisplayTask> tasks;
 
   const TaskGroup({
     required this.key,

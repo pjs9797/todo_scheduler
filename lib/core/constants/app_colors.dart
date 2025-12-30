@@ -26,6 +26,13 @@ class AppColors {
     '#0F766E', // teal
   ];
 
+  // Amber 색상 (즐겨찾기용)
+  static const Color amber50 = Color(0xFFFFFBEB);
+  static const Color amber100 = Color(0xFFFEF3C7);
+  static const Color amber300 = Color(0xFFFCD34D);
+  static const Color amber500 = Color(0xFFF59E0B);
+  static const Color amber700 = Color(0xFFB45309);
+
   // 상태 색상
   static const Color success = Color(0xFF10B981);
   static const Color error = Color(0xFFEF4444);

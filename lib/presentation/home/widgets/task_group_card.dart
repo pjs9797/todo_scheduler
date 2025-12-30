@@ -7,8 +7,7 @@ import '../controller/home_controller.dart';
 class TaskGroupCard extends StatelessWidget {
   final TaskGroup group;
   final VoidCallback onAddTask;
-  final ValueChanged<TaskEntity> onEditTask;
-  final ValueChanged<TaskEntity> onDeleteTask;
+  final ValueChanged<DisplayTask> onDeleteTask;
   final void Function(int oldIndex, int newIndex) onReorder;
   final void Function(TimeOfDay time) onEndTimeChanged;
 
@@ -16,7 +15,6 @@ class TaskGroupCard extends StatelessWidget {
     super.key,
     required this.group,
     required this.onAddTask,
-    required this.onEditTask,
     required this.onDeleteTask,
     required this.onReorder,
     required this.onEndTimeChanged,
@@ -258,10 +256,9 @@ class TaskGroupCard extends StatelessWidget {
       itemBuilder: (context, index) {
         final task = group.tasks[index];
         return _TaskItem(
-          key: ValueKey(task.id),
+          key: ValueKey(task.categoryTaskId),
           task: task,
           index: index,
-          onEdit: () => onEditTask(task),
           onDelete: () => onDeleteTask(task),
         );
       },
@@ -271,16 +268,14 @@ class TaskGroupCard extends StatelessWidget {
 
 /// 개별 할 일 아이템
 class _TaskItem extends StatelessWidget {
-  final TaskEntity task;
+  final DisplayTask task;
   final int index;
-  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _TaskItem({
     super.key,
     required this.task,
     required this.index,
-    required this.onEdit,
     required this.onDelete,
   });
 
@@ -288,56 +283,63 @@ class _TaskItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      child: InkWell(
-        onTap: onEdit,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              // 드래그 핸들
-              ReorderableDragStartListener(
-                index: index,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            // 드래그 핸들
+            ReorderableDragStartListener(
+              index: index,
+              child: Icon(
+                Icons.drag_indicator,
+                size: 18,
+                color: AppColors.slate300,
+              ),
+            ),
+            const SizedBox(width: 8),
+            // 즐겨찾기 아이콘
+            if (task.isFavorite)
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
                 child: Icon(
-                  Icons.drag_indicator,
-                  size: 18,
-                  color: AppColors.slate300,
+                  Icons.star,
+                  size: 14,
+                  color: AppColors.amber500,
                 ),
               ),
-              const SizedBox(width: 8),
-              // 할 일 내용
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      task.title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.slate700,
-                      ),
+            // 할 일 내용
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.slate700,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${task.minutes}분',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.slate500,
-                      ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${task.minutes}분',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.slate500,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              // 삭제 버튼
-              IconButton(
-                onPressed: onDelete,
-                icon: const Icon(Icons.close, size: 18),
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(),
-                color: AppColors.slate400,
-              ),
-            ],
-          ),
+            ),
+            // 삭제 버튼
+            IconButton(
+              onPressed: onDelete,
+              icon: const Icon(Icons.close, size: 18),
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(),
+              color: AppColors.slate400,
+            ),
+          ],
         ),
       ),
     );

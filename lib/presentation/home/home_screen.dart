@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import '../../core/core.dart';
 import '../../domain/domain.dart';
 import '../category/category_management_screen.dart';
-import '../task/task_form_bottom_sheet.dart';
+import '../task/task_selector_bottom_sheet.dart';
+import '../task/task_template_form_bottom_sheet.dart';
+import '../task_library/task_library_screen.dart';
 import 'controller/home_controller.dart';
 import 'widgets/filter_chips.dart';
 import 'widgets/task_group_card.dart';
@@ -75,10 +77,20 @@ class HomeScreen extends GetView<HomeController> {
               ),
             ],
           ),
-          IconButton(
-            onPressed: _onOpenCategoryManagement,
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: AppStrings.categoryManage,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                onPressed: _onOpenTaskLibrary,
+                icon: const Icon(Icons.library_books_outlined),
+                tooltip: AppStrings.taskLibrary,
+              ),
+              IconButton(
+                onPressed: _onOpenCategoryManagement,
+                icon: const Icon(Icons.folder_outlined),
+                tooltip: AppStrings.categoryManage,
+              ),
+            ],
           ),
         ],
       ),
@@ -118,8 +130,7 @@ class HomeScreen extends GetView<HomeController> {
               child: TaskGroupCard(
                 group: group,
                 onAddTask: () => _onAddTaskToCategory(group.categoryId),
-                onEditTask: _onEditTask,
-                onDeleteTask: _onDeleteTask,
+                onDeleteTask: (task) => _onRemoveTask(task),
                 onReorder: (oldIndex, newIndex) {
                   controller.reorderTasks(group.categoryId, oldIndex, newIndex);
                 },
@@ -184,45 +195,58 @@ class HomeScreen extends GetView<HomeController> {
     if (filter is TaskFilterByCategory) {
       categoryId = filter.categoryId;
     }
-    TaskFormBottomSheet.show(
-      categories: controller.categories,
-      initialCategoryId: categoryId,
-      onSave: (title, minutes, catId) async {
-        await controller.addTask(title, minutes, catId);
+    if (categoryId != null) {
+      _onAddTaskToCategory(categoryId);
+    }
+  }
+
+  Future<void> _onAddTaskToCategory(String? categoryId) async {
+    if (categoryId == null) return;
+
+    final allTemplates = await controller.getAllTemplates();
+    final favorites = await controller.getFavoriteTemplates();
+    final alreadyAdded = await controller.getAddedTemplateIds(categoryId);
+
+    TaskSelectorBottomSheet.show(
+      allTemplates: allTemplates,
+      favorites: favorites,
+      alreadyAddedIds: alreadyAdded,
+      onSelect: (templateIds) async {
+        await controller.addTasksToCategory(categoryId, templateIds);
+      },
+      onCreateNew: () {
+        _onCreateNewTask(categoryId);
       },
     );
   }
 
-  void _onAddTaskToCategory(String? categoryId) {
-    TaskFormBottomSheet.show(
-      categories: controller.categories,
-      initialCategoryId: categoryId,
-      onSave: (title, minutes, catId) async {
-        await controller.addTask(title, minutes, catId);
-      },
-    );
-  }
-
-  void _onEditTask(TaskEntity task) {
-    TaskFormBottomSheet.show(
-      categories: controller.categories,
-      task: task,
-      onSave: (title, minutes, categoryId) async {
-        await controller.updateTask(
-          task: task,
+  void _onCreateNewTask(String categoryId) {
+    TaskTemplateFormBottomSheet.show(
+      onSave: (title, minutes, isFavorite) async {
+        await controller.createAndAddTask(
           title: title,
           minutes: minutes,
           categoryId: categoryId,
+          isFavorite: isFavorite,
+        );
+        // Return a dummy template for the result
+        return TaskTemplateEntity(
+          id: '',
+          title: title,
+          minutes: minutes,
+          isFavorite: isFavorite,
+          tagIds: [],
+          createdAt: DateTime.now(),
         );
       },
     );
   }
 
-  void _onDeleteTask(TaskEntity task) async {
+  void _onRemoveTask(DisplayTask task) async {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('삭제'),
-        content: Text('"${task.title}"${AppStrings.taskDeleteConfirm}'),
+        title: const Text('제거'),
+        content: Text('"${task.title}"을(를) 이 카테고리에서 제거할까요?\n(할일 라이브러리에는 남아있어요)'),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
@@ -231,7 +255,7 @@ class HomeScreen extends GetView<HomeController> {
           TextButton(
             onPressed: () => Get.back(result: true),
             child: const Text(
-              AppStrings.delete,
+              '제거',
               style: TextStyle(color: AppColors.error),
             ),
           ),
@@ -240,10 +264,10 @@ class HomeScreen extends GetView<HomeController> {
     );
 
     if (confirmed == true) {
-      await controller.deleteTask(task.id);
+      await controller.removeTaskFromCategory(task.categoryTaskId);
       Get.snackbar(
-        '삭제 완료',
-        AppStrings.taskDeleted,
+        '제거 완료',
+        '카테고리에서 할일을 제거했어요.',
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(16),
       );
@@ -253,6 +277,12 @@ class HomeScreen extends GetView<HomeController> {
   void _onOpenCategoryManagement() async {
     await Get.to(() => const CategoryManagementScreen());
     // 카테고리 변경 시 홈 화면 새로고침
+    controller.loadData();
+  }
+
+  void _onOpenTaskLibrary() async {
+    await Get.to(() => const TaskLibraryScreen());
+    // 할 일 변경 시 홈 화면 새로고침
     controller.loadData();
   }
 }
