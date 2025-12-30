@@ -41,12 +41,6 @@ class FilterChips extends StatelessWidget {
                       onFilterChanged(TaskFilterByCategory(category.id)),
                 ),
               )),
-          // 미분류 필터
-          _FilterChip(
-            label: AppStrings.filterUnassigned,
-            isSelected: currentFilter is TaskFilterUnassigned,
-            onTap: () => onFilterChanged(const TaskFilterUnassigned()),
-          ),
         ],
       ),
     );

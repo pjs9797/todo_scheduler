@@ -39,22 +39,17 @@ class InitialBinding extends Bindings {
     // ==================== Domain Layer ====================
 
     // Category UseCases
-    Get.lazyPut(() => GetAllCategoriesUseCase(Get.find<CategoryRepository>()));
-    Get.lazyPut(() => AddCategoryUseCase(Get.find<CategoryRepository>()));
-    Get.lazyPut(() => UpdateCategoryUseCase(Get.find<CategoryRepository>()));
+    Get.lazyPut(() => GetAllCategoriesUseCase(Get.find<CategoryRepository>()), fenix: true);
+    Get.lazyPut(() => AddCategoryUseCase(Get.find<CategoryRepository>()), fenix: true);
+    Get.lazyPut(() => UpdateCategoryUseCase(Get.find<CategoryRepository>()), fenix: true);
     Get.lazyPut(() => DeleteCategoryUseCase(
           Get.find<CategoryRepository>(),
           Get.find<TaskRepository>(),
-        ));
-    Get.lazyPut(() => ReorderCategoriesUseCase(Get.find<CategoryRepository>()));
+        ), fenix: true);
+    Get.lazyPut(() => ReorderCategoriesUseCase(Get.find<CategoryRepository>()), fenix: true);
 
-    // Task UseCases
-    Get.lazyPut(() => GetTasksByFilterUseCase(Get.find<TaskRepository>()));
-    Get.lazyPut(() => AddTaskUseCase(Get.find<TaskRepository>()));
-    Get.lazyPut(() => UpdateTaskUseCase(Get.find<TaskRepository>()));
-    Get.lazyPut(() => DeleteTaskUseCase(Get.find<TaskRepository>()));
-    Get.lazyPut(() => ReorderTasksUseCase(Get.find<TaskRepository>()));
-    Get.lazyPut(() => CalculateStartTimeUseCase());
+    // Task UseCases (legacy - 마이그레이션 후 제거 예정)
+    Get.lazyPut(() => CalculateStartTimeUseCase(), fenix: true);
 
     // ==================== Presentation Layer ====================
 

@@ -41,10 +41,6 @@ class HomeScreen extends GetView<HomeController> {
           );
         }),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _onAddTask,
-        child: const Icon(Icons.add),
-      ),
     );
   }
 
@@ -158,6 +154,8 @@ class HomeScreen extends GetView<HomeController> {
       ),
       child: Column(
         children: [
+          Icon(Icons.inbox_outlined, size: 40, color: AppColors.slate300),
+          const SizedBox(height: 12),
           const Text(
             '아직 할 일이 없어요',
             style: TextStyle(
@@ -168,18 +166,10 @@ class HomeScreen extends GetView<HomeController> {
           ),
           const SizedBox(height: 4),
           const Text(
-            '아래 \'할 일 추가\'로 시작해보세요.',
+            '카테고리 내 + 버튼으로 할 일을 추가해보세요',
             style: TextStyle(
               fontSize: 13,
               color: AppColors.slate500,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: _onAddTask,
-              child: const Text(AppStrings.taskAdd),
             ),
           ),
         ],
@@ -188,17 +178,6 @@ class HomeScreen extends GetView<HomeController> {
   }
 
   // ==================== Actions ====================
-
-  void _onAddTask() {
-    final filter = controller.currentFilter.value;
-    String? categoryId;
-    if (filter is TaskFilterByCategory) {
-      categoryId = filter.categoryId;
-    }
-    if (categoryId != null) {
-      _onAddTaskToCategory(categoryId);
-    }
-  }
 
   Future<void> _onAddTaskToCategory(String? categoryId) async {
     if (categoryId == null) return;
