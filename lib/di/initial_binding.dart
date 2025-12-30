@@ -3,6 +3,7 @@ import '../data/data.dart';
 import '../domain/domain.dart';
 import '../presentation/category/controller/category_controller.dart';
 import '../presentation/home/controller/home_controller.dart';
+import '../presentation/task_library/controller/task_library_controller.dart';
 
 /// 앱 시작 시 의존성 주입
 class InitialBinding extends Bindings {
@@ -22,39 +23,44 @@ class InitialBinding extends Bindings {
       () => TaskRepositoryImpl(Get.find<LocalDataSource>()),
       fenix: true,
     );
+    Get.lazyPut<TaskTemplateRepository>(
+      () => TaskTemplateRepositoryImpl(Get.find<LocalDataSource>()),
+      fenix: true,
+    );
+    Get.lazyPut<CategoryTaskRepository>(
+      () => CategoryTaskRepositoryImpl(Get.find<LocalDataSource>()),
+      fenix: true,
+    );
+    Get.lazyPut<TaskTagRepository>(
+      () => TaskTagRepositoryImpl(Get.find<LocalDataSource>()),
+      fenix: true,
+    );
 
     // ==================== Domain Layer ====================
 
     // Category UseCases
-    Get.lazyPut(() => GetAllCategoriesUseCase(Get.find<CategoryRepository>()));
-    Get.lazyPut(() => AddCategoryUseCase(Get.find<CategoryRepository>()));
-    Get.lazyPut(() => UpdateCategoryUseCase(Get.find<CategoryRepository>()));
+    Get.lazyPut(() => GetAllCategoriesUseCase(Get.find<CategoryRepository>()), fenix: true);
+    Get.lazyPut(() => AddCategoryUseCase(Get.find<CategoryRepository>()), fenix: true);
+    Get.lazyPut(() => UpdateCategoryUseCase(Get.find<CategoryRepository>()), fenix: true);
     Get.lazyPut(() => DeleteCategoryUseCase(
           Get.find<CategoryRepository>(),
           Get.find<TaskRepository>(),
-        ));
-    Get.lazyPut(() => ReorderCategoriesUseCase(Get.find<CategoryRepository>()));
+        ), fenix: true);
+    Get.lazyPut(() => ReorderCategoriesUseCase(Get.find<CategoryRepository>()), fenix: true);
 
-    // Task UseCases
-    Get.lazyPut(() => GetTasksByFilterUseCase(Get.find<TaskRepository>()));
-    Get.lazyPut(() => AddTaskUseCase(Get.find<TaskRepository>()));
-    Get.lazyPut(() => UpdateTaskUseCase(Get.find<TaskRepository>()));
-    Get.lazyPut(() => DeleteTaskUseCase(Get.find<TaskRepository>()));
-    Get.lazyPut(() => ReorderTasksUseCase(Get.find<TaskRepository>()));
-    Get.lazyPut(() => CalculateStartTimeUseCase());
+    // Task UseCases (legacy - 마이그레이션 후 제거 예정)
+    Get.lazyPut(() => CalculateStartTimeUseCase(), fenix: true);
 
     // ==================== Presentation Layer ====================
 
     // Controllers
     Get.lazyPut(() => HomeController(
           getAllCategoriesUseCase: Get.find<GetAllCategoriesUseCase>(),
-          getTasksByFilterUseCase: Get.find<GetTasksByFilterUseCase>(),
-          addTaskUseCase: Get.find<AddTaskUseCase>(),
-          updateTaskUseCase: Get.find<UpdateTaskUseCase>(),
-          deleteTaskUseCase: Get.find<DeleteTaskUseCase>(),
-          reorderTasksUseCase: Get.find<ReorderTasksUseCase>(),
           updateCategoryUseCase: Get.find<UpdateCategoryUseCase>(),
           calculateStartTimeUseCase: Get.find<CalculateStartTimeUseCase>(),
+          templateRepository: Get.find<TaskTemplateRepository>(),
+          categoryTaskRepository: Get.find<CategoryTaskRepository>(),
+          tagRepository: Get.find<TaskTagRepository>(),
         ));
 
     Get.lazyPut(
@@ -64,6 +70,15 @@ class InitialBinding extends Bindings {
         updateCategoryUseCase: Get.find<UpdateCategoryUseCase>(),
         deleteCategoryUseCase: Get.find<DeleteCategoryUseCase>(),
         reorderCategoriesUseCase: Get.find<ReorderCategoriesUseCase>(),
+      ),
+      fenix: true,
+    );
+
+    Get.lazyPut(
+      () => TaskLibraryController(
+        Get.find<TaskTemplateRepository>(),
+        Get.find<CategoryTaskRepository>(),
+        Get.find<TaskTagRepository>(),
       ),
       fenix: true,
     );

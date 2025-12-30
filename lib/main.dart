@@ -26,6 +26,13 @@ void main() async {
   await localDataSource.init();
   Get.put(localDataSource);
 
+  // 마이그레이션 실행 (기존 Task → TaskTemplate)
+  final migrationService = MigrationService(localDataSource);
+  if (migrationService.needsMigration()) {
+    final result = await migrationService.migrate();
+    debugPrint('[Migration] ${result.message}');
+  }
+
   runApp(const TodoSchedulerApp());
 }
 

@@ -31,6 +31,17 @@ class AppStrings {
   static const String taskEmpty = '아직 할 일이 없어요. \'할 일 추가\'로 시작해보세요.';
   static const String taskDeleteConfirm = '을(를) 삭제할까요?';
 
+  // 할 일 라이브러리
+  static const String taskLibrary = '할 일 관리';
+  static const String taskSelect = '할 일 선택';
+  static const String taskSelectHint = '검색...';
+  static const String taskFavorites = '즐겨찾기';
+  static const String taskAll = '전체 할 일';
+  static const String taskNewCreate = '새 할 일 만들기';
+  static const String taskSelected = '개 선택';
+  static const String taskLibraryEmpty = '아직 만든 할 일이 없어요.';
+  static const String taskUsedIn = '개 카테고리에서 사용 중';
+
   // 시간
   static const String endTime = '완료 시간';
   static const String endTimeHint = '끝낼 시간을 선택하세요';
