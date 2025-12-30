@@ -40,7 +40,12 @@
       "Bash(/Users/pjs1997/Library/Android/sdk/platform-tools/adb devices -l)",
       "Bash(/Users/pjs1997/Library/Android/sdk/platform-tools/adb:*)",
       "Bash(/Users/pjs1997/Library/Android/sdk/cmdline-tools/latest/bin/avdmanager list device)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(flutter build:*)",
+      "Bash(open:*)",
+      "Bash(python3:*)",
+      "Bash(dart run:*)",
+      "Bash(ls:*)"
     ]
   }
 }
