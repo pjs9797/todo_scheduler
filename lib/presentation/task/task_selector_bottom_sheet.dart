@@ -7,6 +7,7 @@ import '../../domain/domain.dart';
 class TaskSelectorBottomSheet extends StatefulWidget {
   final List<TaskTemplateEntity> allTemplates;
   final List<TaskTemplateEntity> favorites;
+  final List<TaskTagEntity> availableTags;
   final Set<String> alreadyAddedIds;
   final Future<void> Function(List<String> templateIds) onSelect;
   final VoidCallback onCreateNew;
@@ -15,6 +16,7 @@ class TaskSelectorBottomSheet extends StatefulWidget {
     super.key,
     required this.allTemplates,
     required this.favorites,
+    this.availableTags = const [],
     required this.alreadyAddedIds,
     required this.onSelect,
     required this.onCreateNew,
@@ -24,6 +26,7 @@ class TaskSelectorBottomSheet extends StatefulWidget {
   static Future<void> show({
     required List<TaskTemplateEntity> allTemplates,
     required List<TaskTemplateEntity> favorites,
+    List<TaskTagEntity> availableTags = const [],
     required Set<String> alreadyAddedIds,
     required Future<void> Function(List<String> templateIds) onSelect,
     required VoidCallback onCreateNew,
@@ -32,6 +35,7 @@ class TaskSelectorBottomSheet extends StatefulWidget {
       TaskSelectorBottomSheet(
         allTemplates: allTemplates,
         favorites: favorites,
+        availableTags: availableTags,
         alreadyAddedIds: alreadyAddedIds,
         onSelect: onSelect,
         onCreateNew: onCreateNew,
@@ -49,24 +53,27 @@ class _TaskSelectorBottomSheetState extends State<TaskSelectorBottomSheet> {
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _selectedIds = {};
   String _searchQuery = '';
+  String? _selectedFilter; // null = 전체, 'favorites' = 즐겨찾기, 그 외 = 태그 ID
   bool _isLoading = false;
 
   List<TaskTemplateEntity> get _filteredTemplates {
-    if (_searchQuery.isEmpty) {
-      return widget.allTemplates;
-    }
-    return widget.allTemplates
-        .where((t) => t.title.toLowerCase().contains(_searchQuery.toLowerCase()))
-        .toList();
-  }
+    var templates = widget.allTemplates;
 
-  List<TaskTemplateEntity> get _filteredFavorites {
-    if (_searchQuery.isEmpty) {
-      return widget.favorites;
+    // 필터 적용
+    if (_selectedFilter == 'favorites') {
+      templates = templates.where((t) => t.isFavorite).toList();
+    } else if (_selectedFilter != null) {
+      templates = templates.where((t) => t.tagIds.contains(_selectedFilter)).toList();
     }
-    return widget.favorites
-        .where((t) => t.title.toLowerCase().contains(_searchQuery.toLowerCase()))
-        .toList();
+
+    // 검색 적용
+    if (_searchQuery.isNotEmpty) {
+      templates = templates
+          .where((t) => t.title.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .toList();
+    }
+
+    return templates;
   }
 
   @override
@@ -96,6 +103,7 @@ class _TaskSelectorBottomSheetState extends State<TaskSelectorBottomSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildHeader(),
+          _buildFilterChips(),
           _buildSearchBar(),
           Flexible(child: _buildContent()),
           _buildFooter(bottomPadding),
@@ -142,9 +150,48 @@ class _TaskSelectorBottomSheetState extends State<TaskSelectorBottomSheet> {
     );
   }
 
+  Widget _buildFilterChips() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            // 전체 필터
+            _FilterChip(
+              label: '전체',
+              isSelected: _selectedFilter == null,
+              onTap: () => setState(() => _selectedFilter = null),
+            ),
+            const SizedBox(width: 8),
+            // 즐겨찾기 필터
+            _FilterChip(
+              label: '즐겨찾기',
+              icon: Icons.star,
+              color: AppColors.amber500,
+              isSelected: _selectedFilter == 'favorites',
+              onTap: () => setState(() => _selectedFilter = 'favorites'),
+            ),
+            const SizedBox(width: 8),
+            // 태그 필터들
+            ...widget.availableTags.map((tag) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _FilterChip(
+                    label: tag.name,
+                    colorHex: tag.colorHex,
+                    isSelected: _selectedFilter == tag.id,
+                    onTap: () => setState(() => _selectedFilter = tag.id),
+                  ),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSearchBar() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
@@ -169,23 +216,43 @@ class _TaskSelectorBottomSheetState extends State<TaskSelectorBottomSheet> {
       return _buildEmptyState();
     }
 
+    final templates = _filteredTemplates;
+
+    if (templates.isEmpty) {
+      return _buildFilterEmptyState();
+    }
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       children: [
-        // 즐겨찾기 섹션
-        if (_filteredFavorites.isNotEmpty) ...[
-          _buildSectionHeader(AppStrings.taskFavorites, Icons.star, AppColors.amber500),
-          ..._filteredFavorites.map((t) => _buildTaskItem(t)),
-          const SizedBox(height: 16),
-        ],
-        // 전체 할일 섹션
-        _buildSectionHeader(AppStrings.taskAll, Icons.list_alt, AppColors.slate600),
-        ..._filteredTemplates.map((t) => _buildTaskItem(t)),
+        const SizedBox(height: 8),
+        ...templates.map((t) => _buildTaskItem(t)),
         const SizedBox(height: 8),
         // 새 할일 만들기
         _buildCreateNewButton(),
         const SizedBox(height: 16),
       ],
+    );
+  }
+
+  Widget _buildFilterEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.filter_list_off, size: 48, color: AppColors.slate300),
+          const SizedBox(height: 16),
+          const Text(
+            '해당 필터에 맞는 할 일이 없어요',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.slate500,
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildCreateNewButton(),
+        ],
+      ),
     );
   }
 
@@ -205,26 +272,6 @@ class _TaskSelectorBottomSheetState extends State<TaskSelectorBottomSheet> {
           ),
           const SizedBox(height: 24),
           _buildCreateNewButton(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title, IconData icon, Color iconColor) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, top: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: iconColor),
-          const SizedBox(width: 6),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.slate600,
-            ),
-          ),
         ],
       ),
     );
@@ -468,5 +515,78 @@ class _TaskSelectorBottomSheetState extends State<TaskSelectorBottomSheet> {
         setState(() => _isLoading = false);
       }
     }
+  }
+}
+
+/// 필터 칩 위젯
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final String? colorHex;
+  final IconData? icon;
+  final Color? color;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    this.colorHex,
+    this.icon,
+    this.color,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final chipColor = colorHex != null
+        ? ColorUtils.hexToColor(colorHex!)
+        : (color ?? AppColors.slate500);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? chipColor : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? chipColor : AppColors.slate300,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? Colors.white : chipColor,
+              ),
+              const SizedBox(width: 4),
+            ] else if (colorHex != null) ...[
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : chipColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isSelected ? Colors.white : AppColors.slate600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

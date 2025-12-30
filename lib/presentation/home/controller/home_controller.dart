@@ -10,6 +10,7 @@ class HomeController extends GetxController {
   final CalculateStartTimeUseCase _calculateStartTimeUseCase;
   final TaskTemplateRepository _templateRepository;
   final CategoryTaskRepository _categoryTaskRepository;
+  final TaskTagRepository _tagRepository;
 
   HomeController({
     required GetAllCategoriesUseCase getAllCategoriesUseCase,
@@ -17,11 +18,13 @@ class HomeController extends GetxController {
     required CalculateStartTimeUseCase calculateStartTimeUseCase,
     required TaskTemplateRepository templateRepository,
     required CategoryTaskRepository categoryTaskRepository,
+    required TaskTagRepository tagRepository,
   })  : _getAllCategoriesUseCase = getAllCategoriesUseCase,
         _updateCategoryUseCase = updateCategoryUseCase,
         _calculateStartTimeUseCase = calculateStartTimeUseCase,
         _templateRepository = templateRepository,
-        _categoryTaskRepository = categoryTaskRepository;
+        _categoryTaskRepository = categoryTaskRepository,
+        _tagRepository = tagRepository;
 
   // ==================== State ====================
 
@@ -224,11 +227,13 @@ class HomeController extends GetxController {
     required int minutes,
     required String categoryId,
     bool isFavorite = false,
+    List<String> tagIds = const [],
   }) async {
     final template = await _templateRepository.add(
       title: title,
       minutes: minutes,
       isFavorite: isFavorite,
+      tagIds: tagIds,
     );
     await addTasksToCategory(categoryId, [template.id]);
   }
@@ -288,6 +293,11 @@ class HomeController extends GetxController {
   /// 즐겨찾기 템플릿 조회
   Future<List<TaskTemplateEntity>> getFavoriteTemplates() async {
     return _templateRepository.getFavorites();
+  }
+
+  /// 모든 태그 조회
+  Future<List<TaskTagEntity>> getAllTags() async {
+    return _tagRepository.getAll();
   }
 
   /// 카테고리에 이미 추가된 템플릿 ID 목록

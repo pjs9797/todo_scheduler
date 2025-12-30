@@ -108,15 +108,24 @@ class HomeScreen extends GetView<HomeController> {
   /// 할 일 목록
   Widget _buildTaskList() {
     return Obx(() {
+      final categories = controller.categories;
       final groups = controller.taskGroups;
-      final hasAnyTasks = groups.any((g) => g.tasks.isNotEmpty);
 
-      if (!hasAnyTasks) {
+      // 카테고리가 없으면 카테고리 추가 안내
+      if (categories.isEmpty) {
+        return SliverToBoxAdapter(
+          child: _buildNoCategoryState(),
+        );
+      }
+
+      // 카테고리는 있지만 그룹이 없으면 (필터 문제 등)
+      if (groups.isEmpty) {
         return SliverToBoxAdapter(
           child: _buildEmptyState(),
         );
       }
 
+      // 카테고리 카드 표시 (할일이 없어도 카드는 표시)
       return SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) {
@@ -142,7 +151,59 @@ class HomeScreen extends GetView<HomeController> {
     });
   }
 
-  /// 빈 상태 위젯
+  /// 카테고리 없음 상태 위젯
+  Widget _buildNoCategoryState() {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slate200),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.folder_off_outlined, size: 48, color: AppColors.slate300),
+          const SizedBox(height: 16),
+          const Text(
+            '카테고리가 없어요',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.slate700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '할 일을 정리할 카테고리를 먼저 만들어주세요',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.slate500,
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 44,
+            child: ElevatedButton.icon(
+              onPressed: _onOpenCategoryManagement,
+              icon: const Icon(Icons.add, size: 20),
+              label: const Text('카테고리 추가'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.slate800,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 빈 상태 위젯 (카테고리는 있지만 할일이 없는 경우)
   Widget _buildEmptyState() {
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -184,11 +245,13 @@ class HomeScreen extends GetView<HomeController> {
 
     final allTemplates = await controller.getAllTemplates();
     final favorites = await controller.getFavoriteTemplates();
+    final tags = await controller.getAllTags();
     final alreadyAdded = await controller.getAddedTemplateIds(categoryId);
 
     TaskSelectorBottomSheet.show(
       allTemplates: allTemplates,
       favorites: favorites,
+      availableTags: tags,
       alreadyAddedIds: alreadyAdded,
       onSelect: (templateIds) async {
         await controller.addTasksToCategory(categoryId, templateIds);
@@ -201,12 +264,13 @@ class HomeScreen extends GetView<HomeController> {
 
   void _onCreateNewTask(String categoryId) {
     TaskTemplateFormBottomSheet.show(
-      onSave: (title, minutes, isFavorite) async {
+      onSave: (title, minutes, isFavorite, tagIds) async {
         await controller.createAndAddTask(
           title: title,
           minutes: minutes,
           categoryId: categoryId,
           isFavorite: isFavorite,
+          tagIds: tagIds,
         );
         // Return a dummy template for the result
         return TaskTemplateEntity(
@@ -214,7 +278,7 @@ class HomeScreen extends GetView<HomeController> {
           title: title,
           minutes: minutes,
           isFavorite: isFavorite,
-          tagIds: [],
+          tagIds: tagIds,
           createdAt: DateTime.now(),
         );
       },

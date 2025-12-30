@@ -60,6 +60,7 @@ class InitialBinding extends Bindings {
           calculateStartTimeUseCase: Get.find<CalculateStartTimeUseCase>(),
           templateRepository: Get.find<TaskTemplateRepository>(),
           categoryTaskRepository: Get.find<CategoryTaskRepository>(),
+          tagRepository: Get.find<TaskTagRepository>(),
         ));
 
     Get.lazyPut(
@@ -77,6 +78,7 @@ class InitialBinding extends Bindings {
       () => TaskLibraryController(
         Get.find<TaskTemplateRepository>(),
         Get.find<CategoryTaskRepository>(),
+        Get.find<TaskTagRepository>(),
       ),
       fenix: true,
     );

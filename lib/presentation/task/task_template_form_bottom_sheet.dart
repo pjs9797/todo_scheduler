@@ -7,22 +7,26 @@ import '../../domain/domain.dart';
 /// 할 일 템플릿 추가/수정 바텀시트
 class TaskTemplateFormBottomSheet extends StatefulWidget {
   final TaskTemplateEntity? template;
-  final Future<TaskTemplateEntity> Function(String title, int minutes, bool isFavorite) onSave;
+  final List<TaskTagEntity> availableTags;
+  final Future<TaskTemplateEntity> Function(String title, int minutes, bool isFavorite, List<String> tagIds) onSave;
 
   const TaskTemplateFormBottomSheet({
     super.key,
     this.template,
+    this.availableTags = const [],
     required this.onSave,
   });
 
   /// 바텀시트 표시
   static Future<TaskTemplateEntity?> show({
     TaskTemplateEntity? template,
-    required Future<TaskTemplateEntity> Function(String title, int minutes, bool isFavorite) onSave,
+    List<TaskTagEntity> availableTags = const [],
+    required Future<TaskTemplateEntity> Function(String title, int minutes, bool isFavorite, List<String> tagIds) onSave,
   }) async {
     return Get.bottomSheet<TaskTemplateEntity>(
       TaskTemplateFormBottomSheet(
         template: template,
+        availableTags: availableTags,
         onSave: onSave,
       ),
       isScrollControlled: true,
@@ -38,6 +42,7 @@ class _TaskTemplateFormBottomSheetState extends State<TaskTemplateFormBottomShee
   late final TextEditingController _titleController;
   late final TextEditingController _minutesController;
   late bool _isFavorite;
+  late List<String> _selectedTagIds;
   bool _isLoading = false;
 
   bool get isEditing => widget.template != null;
@@ -50,6 +55,7 @@ class _TaskTemplateFormBottomSheetState extends State<TaskTemplateFormBottomShee
       text: widget.template?.minutes.toString() ?? '',
     );
     _isFavorite = widget.template?.isFavorite ?? false;
+    _selectedTagIds = List.from(widget.template?.tagIds ?? []);
   }
 
   @override
@@ -184,9 +190,81 @@ class _TaskTemplateFormBottomSheetState extends State<TaskTemplateFormBottomShee
           textInputAction: TextInputAction.done,
         ),
         const SizedBox(height: 20),
+        // 태그 선택
+        if (widget.availableTags.isNotEmpty) ...[
+          _buildLabel('태그'),
+          const SizedBox(height: 10),
+          _buildTagSelector(),
+          const SizedBox(height: 20),
+        ],
         // 즐겨찾기
         _buildFavoriteToggle(),
       ],
+    );
+  }
+
+  Widget _buildTagSelector() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: widget.availableTags.map((tag) {
+        final isSelected = _selectedTagIds.contains(tag.id);
+        final color = ColorUtils.hexToColor(tag.colorHex);
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              if (isSelected) {
+                _selectedTagIds.remove(tag.id);
+              } else {
+                _selectedTagIds.add(tag.id);
+              }
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected ? color : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isSelected ? color : AppColors.slate300,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.white : color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  tag.name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: isSelected ? Colors.white : AppColors.slate600,
+                  ),
+                ),
+                if (isSelected) ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.check,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -359,7 +437,7 @@ class _TaskTemplateFormBottomSheetState extends State<TaskTemplateFormBottomShee
     setState(() => _isLoading = true);
 
     try {
-      final result = await widget.onSave(title, minutes, _isFavorite);
+      final result = await widget.onSave(title, minutes, _isFavorite, _selectedTagIds);
       Get.back(result: result);
       Get.snackbar(
         isEditing ? '수정 완료' : '추가 완료',
